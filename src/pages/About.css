@@ -1,0 +1,192 @@
+
+.about-hero {
+  position: relative;
+  min-height: 80vh;
+  background: url("https://images.unsplash.com/photo-1549298916-b41d501d3772")
+    center / cover no-repeat;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.about-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(2, 6, 23, 0.85),
+    rgba(2, 6, 23, 0.6)
+  );
+}
+
+.about-hero-content {
+  position: relative;
+  max-width: 700px;
+  padding: 0 20px;
+  color: #fff;
+}
+
+.about-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: rgba(230, 181, 102, 0.2);
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+}
+
+.about-hero h1 {
+  font-size: 54px;
+  font-weight: 800;
+}
+
+.about-hero h1 span {
+  color: var(--accent);
+}
+
+.about-hero p {
+  margin-top: 18px;
+  font-size: 16px;
+  color: #e5e7eb;
+}
+
+.about-section,
+.about-craft {
+  padding: 90px;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.about-grid.reverse {
+  grid-template-columns: 1fr 1fr;
+}
+
+.about-section h2,
+.about-craft h2 {
+  font-size: 34px;
+  margin-bottom: 16px;
+}
+
+.about-section p,
+.about-craft p {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+.about-image img {
+  width: 100%;
+  border-radius: 24px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+}
+
+
+.about-values {
+  padding: 90px;
+  background: linear-gradient(180deg, var(--bg), rgba(255, 255, 255, 0.03));
+}
+
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.value-card {
+  background: var(--card);
+  padding: 36px 28px;
+  border-radius: 20px;
+  text-align: center;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.value-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+
+.value-card svg {
+  font-size: 30px;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+
+.about-stats {
+  padding: 80px 90px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.stat-card {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 34px;
+  text-align: center;
+}
+
+.stat-card svg {
+  font-size: 26px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.stat-card h3 {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.about-cta {
+  padding: 90px 24px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(230, 181, 102, 0.15), transparent);
+}
+
+.cta-btn {
+  margin-top: 24px;
+  display: inline-block;
+  padding: 14px 36px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #020617;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cta-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(230, 181, 102, 0.45);
+}
+
+
+@media (max-width: 900px) {
+  .about-section,
+  .about-craft,
+  .about-values,
+  .about-stats {
+    padding: 60px 24px;
+  }
+
+  .about-grid,
+  .values-grid,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-hero h1 {
+    font-size: 40px;
+  }
+}

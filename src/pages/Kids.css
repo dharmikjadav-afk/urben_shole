@@ -1,0 +1,71 @@
+.kids-page {
+  padding: 120px 90px 80px;
+}
+
+.kids-hero {
+  position: relative;
+  height: 320px;
+  border-radius: 28px;
+  background: url("kids.jpg") center / cover no-repeat;
+  margin-bottom: 60px;
+  overflow: hidden;
+}
+
+.kids-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(2, 6, 23, 0.85),
+    rgba(2, 6, 23, 0.35)
+  );
+}
+
+.kids-hero-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  padding: 0 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #fff;
+}
+
+
+.kids-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+}
+
+
+.kids-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.kids-filters input,
+.kids-filters select {
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--card);
+  color: var(--text);
+}
+
+/* RESPONSIVE */@media (max-width: 900px) {
+  .kids-page {
+    padding: 110px 24px 60px;
+  }
+  .kids-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 520px) {
+  .kids-grid {
+    grid-template-columns: 1fr;
+  }
+}

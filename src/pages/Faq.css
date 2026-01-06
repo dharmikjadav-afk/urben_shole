@@ -1,0 +1,129 @@
+
+.faq-page {
+  min-height: 100vh;
+  padding: 120px 24px 80px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 92%, #020617),
+    var(--bg)
+  );
+}
+
+
+.faq-header {
+  text-align: center;
+  max-width: 700px;
+  margin: auto;
+}
+
+.faq-header svg {
+  font-size: 40px;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.faq-header h1 {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.faq-header p {
+  margin-top: 10px;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+
+.faq-container {
+  max-width: 900px;
+  margin: 60px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+
+.faq-card {
+  background: var(--card);
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+.faq-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.faq-question {
+  width: 100%;
+  padding: 22px 26px;
+  background: transparent;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  scroll-margin-top: 120px;
+}
+
+.faq-question span {
+  color: var(--faq-question);
+}
+
+
+.faq-icon {
+  font-size: 18px;
+  color: var(--accent);
+  transition: transform 0.35s ease;
+}
+
+.faq-card.open .faq-icon {
+  transform: rotate(180deg);
+}
+
+.faq-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s ease;
+}
+
+.faq-card.open .faq-content {
+  grid-template-rows: 1fr;
+}
+
+.faq-answer {
+  overflow: hidden;
+}
+
+.faq-answer p {
+  padding: 0 26px 22px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--faq-answer);
+}
+
+
+[data-theme="light"] {
+  --faq-question: #0f172a;
+  --faq-answer: #475569;
+}
+
+[data-theme="dark"] {
+  --faq-question: #f8fafc;
+  --faq-answer: #cbd5f5;
+}
+
+
+@media (max-width: 768px) {
+  .faq-header h1 {
+    font-size: 32px;
+  }
+
+  .faq-container {
+    margin-top: 40px;
+  }
+}

@@ -1,0 +1,91 @@
+
+.privacy-page {
+  min-height: 100vh;
+  padding: 120px 24px 80px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 92%, #020617),
+    var(--bg)
+  );
+}
+
+
+.privacy-header {
+  max-width: 800px;
+  margin: auto;
+  text-align: center;
+}
+
+.privacy-header svg {
+  font-size: 44px;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.privacy-header h1 {
+  font-size: 42px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.privacy-header p {
+  margin-top: 12px;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+
+.privacy-container {
+  max-width: 900px;
+  margin: 70px auto 0;
+  background: var(--card);
+  border-radius: 22px;
+  padding: 40px 42px;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+
+.policy-section {
+  margin-bottom: 28px;
+}
+
+.policy-section h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.policy-section p {
+  font-size: 14.8px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.privacy-footer {
+  max-width: 800px;
+  margin: 60px auto 0;
+  text-align: center;
+  color: var(--muted);
+}
+
+.privacy-footer svg {
+  font-size: 26px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.privacy-footer p {
+  font-size: 14px;
+}
+
+
+@media (max-width: 768px) {
+  .privacy-header h1 {
+    font-size: 34px;
+  }
+
+  .privacy-container {
+    padding: 30px 26px;
+  }
+}
