@@ -20,7 +20,7 @@ function Home() {
   };
 
   return (
-    <>
+    <> 
 
       <section className="hero">
         <div className="hero-overlay" />
