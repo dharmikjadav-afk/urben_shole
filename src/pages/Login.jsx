@@ -1,22 +1,21 @@
-import { useContext } from "react";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import "./Login.css";
 import { AuthContext } from "../context/AuthContext";
+import { api } from "../api/api";
 
 function Login() {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
-  const { user, logout } = useContext(AuthContext);
-
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  // 🔹 Updated: Backend Login
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -24,26 +23,38 @@ function Login() {
       return;
     }
 
-    const user = JSON.parse(localStorage.getItem("user"));
+    try {
+      const response = await fetch(api.login, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!user) {
-      setError("No account found. Please create an account.");
-      return;
-    }
+      const data = await response.json();
 
-    if (user.email === email && user.password === password) {
-      login(user); 
-      navigate("/");
-    } else {
-      setError("Invalid email or password");
+      if (!response.ok) {
+        setError(data.message || "Invalid email or password");
+        return;
+      }
+
+      // Save token and user
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // Update AuthContext
+      login(data.user);
+
+      // small delay to update context
+      setTimeout(() => {
+        navigate("/");
+      }, 100);
+    } catch (err) {
+      console.error(err);
+      setError("Server error. Please try again.");
     }
   };
-
-  const handleLogout = () => {
-  logout();
-  navigate("/login");
-};
-
 
   return (
     <section className="auth-wrapper">
@@ -58,7 +69,6 @@ function Login() {
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
-
           <div className="input-group">
             <input
               type="email"
@@ -72,7 +82,6 @@ function Login() {
             />
             <label>Email address</label>
           </div>
-
 
           <div className="input-group password-group">
             <input
@@ -96,7 +105,6 @@ function Login() {
               {showPassword ? <FiEyeOff /> : <FiEye />}
             </button>
           </div>
-
 
           <div className="auth-options">
             <Link to="/forgot-password">Forgot password?</Link>

@@ -81,7 +81,7 @@ function Home() {
               <div className="category-overlay">
                 <h3>Women</h3>
                 <span>Explore Collection →</span>
-              </div>
+              </div>  
             </div>
           </Link>
 

@@ -17,13 +17,13 @@ import "./Navbar.css";
 import { ThemeContext } from "../context/ThemeContext";
 import { AuthContext } from "../context/AuthContext";
 import { WishlistContext } from "../context/WishlistContext";
-import { CartContext } from "../context/CartContext"; 
+import { CartContext } from "../context/CartContext";
 
 function Navbar() {
   const { theme, toggleTheme } = useContext(ThemeContext);
   const { user, logout } = useContext(AuthContext);
   const { wishlist } = useContext(WishlistContext);
-  const { cart } = useContext(CartContext); 
+  const { cart } = useContext(CartContext);
 
   const navigate = useNavigate();
 
@@ -38,7 +38,12 @@ function Navbar() {
     navigate("/login");
   };
 
-  const cartCount = cart.reduce((total, item) => total + item.qty, 0);
+  // Safe cart count
+  const cartCount = cart?.reduce((total, item) => total + item.qty, 0) || 0;
+
+  // Safe username (IMPORTANT FIX)
+  const displayName =
+    user?.username || user?.name || user?.email?.split("@")[0] || "User";
 
   return (
     <header className="navbar">
@@ -61,9 +66,8 @@ function Navbar() {
           <NavLink to="/contact">Contact</NavLink>
         </nav>
 
-
         <div className="nav-actions">
- 
+          {/* Theme Toggle */}
           <button
             className="icon-btn"
             onClick={toggleTheme}
@@ -71,20 +75,21 @@ function Navbar() {
           >
             {theme === "dark" ? <FiSun /> : <FiMoon />}
           </button>
-          {/* Help Center */}
-          <Link to="/help" className="icon-btn" aria-label="Help Center">
+
+          {/* Help */}
+          <Link to="/help" className="icon-btn">
             <FiHelpCircle />
           </Link>
 
           {/* Wishlist */}
           <Link to="/wishlist" className="icon-btn wishlist-icon">
             <FiHeart />
-            {user && wishlist.length > 0 && (
+            {user && wishlist?.length > 0 && (
               <span className="nav-badge">{wishlist.length}</span>
             )}
           </Link>
 
-  
+          {/* Cart */}
           <Link to="/cart" className="icon-btn">
             <FiShoppingCart />
             {user && cartCount > 0 && (
@@ -92,12 +97,12 @@ function Navbar() {
             )}
           </Link>
 
-
+          {/* Track Order */}
           <Link to="/track-order" className="icon-btn">
             <FiTruck />
           </Link>
 
- 
+          {/* Login / Profile */}
           {!user ? (
             <Link to="/login" className="login-btn">
               <FiUser />
@@ -110,7 +115,7 @@ function Navbar() {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 <FiUser />
-                <span>{user.name.split(" ")[0]}</span>
+                <span>{displayName}</span>
               </button>
 
               {dropdownOpen && (
@@ -125,7 +130,7 @@ function Navbar() {
             </div>
           )}
 
-
+          {/* Mobile Menu Button */}
           <button
             className="hamburger"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -136,6 +141,7 @@ function Navbar() {
         </div>
       </div>
 
+      {/* Mobile Menu */}
       <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
         <NavLink to="/" onClick={closeMenu}>
           Home
