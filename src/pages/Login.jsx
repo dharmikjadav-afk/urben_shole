@@ -4,6 +4,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import "./Login.css";
 import { AuthContext } from "../context/AuthContext";
 import { api } from "../api/api";
+import { toast } from "react-toastify"; // 🔹 Toast
 
 function Login() {
   const navigate = useNavigate();
@@ -12,47 +13,54 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // 🔹 Updated: Backend Login
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email || !password) {
-      setError("Please fill in all fields");
+      toast.error("Please fill in all fields");
       return;
     }
 
     try {
+      setLoading(true);
+
       const response = await fetch(api.login, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Invalid email or password");
+        toast.error(data.message || "Invalid email or password");
         return;
       }
 
-      // Save token and user
+      // Save token
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       // Update AuthContext
       login(data.user);
 
-      // small delay to update context
-      setTimeout(() => {
-        navigate("/");
-      }, 100);
+      // Success notification
+      toast.success(`Welcome back, ${data.user.username}!`);
+
+      // Redirect
+      navigate("/");
     } catch (err) {
       console.error(err);
-      setError("Server error. Please try again.");
+      toast.error("Server error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,33 +74,27 @@ function Login() {
           Login to continue shopping with <strong>UrbanSole</strong>
         </p>
 
-        {error && <div className="auth-error">{error}</div>}
-
         <form onSubmit={handleSubmit}>
+          {/* Email */}
           <div className="input-group">
             <input
               type="email"
               required
               placeholder=" "
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError("");
-              }}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <label>Email address</label>
           </div>
 
+          {/* Password */}
           <div className="input-group password-group">
             <input
               type={showPassword ? "text" : "password"}
               required
               placeholder=" "
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError("");
-              }}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <label>Password</label>
 
@@ -100,7 +102,6 @@ function Login() {
               type="button"
               className="toggle-password"
               onClick={() => setShowPassword(!showPassword)}
-              aria-label="Toggle password visibility"
             >
               {showPassword ? <FiEyeOff /> : <FiEye />}
             </button>
@@ -110,7 +111,9 @@ function Login() {
             <Link to="/forgot-password">Forgot password?</Link>
           </div>
 
-          <button className="auth-btn">Login</button>
+          <button className="auth-btn" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
 
         <div className="auth-footer">

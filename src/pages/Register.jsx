@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import axios from "axios";
+import { api } from "../api/api";
+import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-toastify"; // 🔹 Toast
 import "./Login.css";
 
 const isStrongPassword = (password) => {
-  const regex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
   return regex.test(password);
 };
 
 function Register() {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
 
   const [form, setForm] = useState({
     name: "",
@@ -21,55 +25,71 @@ function Register() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Password strength
     if (!isStrongPassword(form.password)) {
-      setError(
-        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+      toast.error(
+        "Password must include uppercase, lowercase, number & special character",
       );
       return;
     }
 
+    // Match password
     if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
-    const user = {
-      name: form.name,
-      email: form.email,
-      password: form.password,
-    };
+    try {
+      setLoading(true);
 
+      const response = await axios.post(api.register, {
+        username: form.name,
+        email: form.email,
+        password: form.password,
+      });
 
-    localStorage.setItem("user", JSON.stringify(user));
+      const data = response.data;
 
+      // Save token & user
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-    navigate("/login");
+      // Update context
+      login(data.user);
+
+      // Success notification
+      toast.success("Account created successfully! Welcome to UrbanSole");
+
+      // Redirect to Home
+      navigate("/");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <section className="auth-wrapper">
       <div className="auth-glow" />
 
-      <div className="auth-card" data-aos="zoom-in">
+      <div className="auth-card">
         <h2>Create Account</h2>
         <p className="subtitle">
           Join <strong>UrbanSole</strong> and step into premium comfort
         </p>
 
-        {error && <div className="auth-error">{error}</div>}
-
         <form onSubmit={handleSubmit}>
-
+          {/* Name */}
           <div className="input-group">
             <input
               type="text"
@@ -82,6 +102,7 @@ function Register() {
             <label>Full Name</label>
           </div>
 
+          {/* Email */}
           <div className="input-group">
             <input
               type="email"
@@ -94,7 +115,7 @@ function Register() {
             <label>Email address</label>
           </div>
 
-
+          {/* Password */}
           <div className="input-group password-group">
             <input
               type={showPassword ? "text" : "password"}
@@ -120,7 +141,7 @@ function Register() {
             and special character.
           </div>
 
-
+          {/* Confirm Password */}
           <div className="input-group password-group">
             <input
               type={showConfirmPassword ? "text" : "password"}
@@ -141,7 +162,9 @@ function Register() {
             </button>
           </div>
 
-          <button className="auth-btn">Create Account</button>
+          <button className="auth-btn" disabled={loading}>
+            {loading ? "Creating..." : "Create Account"}
+          </button>
         </form>
 
         <div className="auth-footer">
