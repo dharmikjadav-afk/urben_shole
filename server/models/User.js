@@ -24,6 +24,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "user", // user | admin (future)
     },
+
+    // ===== Forgot Password Fields =====
+    resetPasswordToken: {
+      type: String,
+    },
+
+    resetPasswordExpire: {
+      type: Date,
+    },
+    // ===================================
   },
   { timestamps: true },
 );

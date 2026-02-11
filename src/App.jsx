@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import AOS from "aos";
@@ -13,6 +12,7 @@ import Kids from "./pages/Kids";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword"; // ✅ Added
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import Contact from "./pages/Contact";
@@ -35,10 +35,9 @@ import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-/* Layout Wrapper (important) */
+/* Layout Wrapper */
 function Layout() {
   const location = useLocation();
-
 
   return (
     <>
@@ -59,15 +58,13 @@ function Layout() {
         <Route path="/faq" element={<Faq />} />
         <Route path="/shipping-returns" element={<ShippingReturns />} />
         <Route path="/help" element={<HelpCenter />} />
-
         {/* Auth */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-
-
-
-        {/* Other Protected Pages */}
+        <Route path="/reset-password/:token" element={<ResetPassword />} />{" "}
+        {/* ✅ Added */}
+        {/* Protected Routes */}
         <Route
           path="/wishlist"
           element={
@@ -76,7 +73,6 @@ function Layout() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/cart"
           element={
@@ -85,7 +81,6 @@ function Layout() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/checkout"
           element={
@@ -94,7 +89,6 @@ function Layout() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/order-confirmation"
           element={
@@ -103,7 +97,6 @@ function Layout() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/track-order"
           element={
@@ -112,7 +105,6 @@ function Layout() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/orders"
           element={
@@ -121,7 +113,6 @@ function Layout() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/order-details"
           element={

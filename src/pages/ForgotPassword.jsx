@@ -6,8 +6,9 @@ function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email) {
@@ -15,16 +16,35 @@ function ForgotPassword() {
       return;
     }
 
-    const user = JSON.parse(localStorage.getItem("user"));
+    try {
+      setLoading(true);
+      setError("");
+      setMessage("");
 
-    if (!user || user.email !== email) {
-      setError("No account found with this email");
-      return;
+      const res = await fetch(
+        "http://localhost:5000/api/auth/forgot-password",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Something went wrong");
+      }
+
+      setMessage("Password reset link has been sent to your email.");
+      setEmail("");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-
-    setMessage("Password reset link has been sent to your email (simulated).");
-    setError("");
   };
 
   return (
@@ -32,7 +52,7 @@ function ForgotPassword() {
       <div className="auth-glow" />
 
       <div className="auth-card" data-aos="zoom-in">
-        <h2>Reset Password</h2>
+        <h2>Forgot Password</h2>
         <p className="subtitle">
           Enter your registered email to reset your password
         </p>
@@ -56,7 +76,9 @@ function ForgotPassword() {
             <label>Email address</label>
           </div>
 
-          <button className="auth-btn">Send Reset Link</button>
+          <button className="auth-btn" disabled={loading}>
+            {loading ? "Sending..." : "Send Reset Link"}
+          </button>
         </form>
 
         <div className="auth-footer">
