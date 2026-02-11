@@ -4,7 +4,7 @@
   --muted: #64748b;
   --card: #ffffff;
 
-  --primary: #0f172a; 
+  --primary: #0f172a;
   --secondary: #1e293b;
   --accent: #e6b566;
 }
@@ -37,9 +37,17 @@ body {
   width: 100%;
   min-height: 100%;
   overflow-x: hidden;
-  overflow-y: auto; 
+  overflow-y: auto;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+.carddash {
+  background: #1e293b;
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  min-width: 180px;
 }

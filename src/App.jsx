@@ -1,8 +1,10 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import AOS from "aos";
+import "aos/dist/aos.css";
 
-
+/* Pages */
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Men from "./pages/Men";
@@ -18,12 +20,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Checkout from "./pages/Checkout";
 import HelpCenter from "./pages/HelpCenter";
 import Shop from "./pages/Shop";
-import ScrollToTop from "./components/ScrollToTop";
 import ShippingReturns from "./pages/ShippingReturns";
-
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import ProtectedRoute from "./components/ProtectedRoute";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import TrackOrder from "./pages/TrackOrder";
 import MyOrders from "./pages/MyOrders";
@@ -32,41 +29,45 @@ import Faq from "./pages/Faq";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsConditions";
 
-function App() {
-  useEffect(() => {
-    AOS.init({
-      duration: 900,
-      once: true,
-      easing: "ease-in-out",
-    });
-  }, []);
+/* Components */
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+/* Layout Wrapper (important) */
+function Layout() {
+  const location = useLocation();
+
 
   return (
-    <BrowserRouter>
-      <ScrollToTop />
+    <>
       <Navbar />
 
       <Routes>
-
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/men" element={<Men />} />
-        <Route path="/terms" element={<TermsConditions />} />
         <Route path="/women" element={<Women />} />
         <Route path="/kids" element={<Kids />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/shop" element={<Shop />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsConditions />} />
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/shipping-returns" element={<ShippingReturns />} />
+        <Route path="/help" element={<HelpCenter />} />
 
-        <Route path="/shop" element={<Shop />} />
+        {/* Auth */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/help" element={<HelpCenter />} />
-        <Route path="/faq" element={<Faq />} />
-        <Route path="/shipping-returns" element={<ShippingReturns />} />
 
 
+
+        {/* Other Protected Pages */}
         <Route
           path="/wishlist"
           element={
@@ -132,6 +133,23 @@ function App() {
       </Routes>
 
       <Footer />
+    </>
+  );
+}
+
+function App() {
+  useEffect(() => {
+    AOS.init({
+      duration: 900,
+      once: true,
+      easing: "ease-in-out",
+    });
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <Layout />
     </BrowserRouter>
   );
 }
