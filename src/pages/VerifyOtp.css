@@ -1,0 +1,135 @@
+/* ===== Wrapper ===== */
+.otp-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  background: linear-gradient(135deg, #0b1c3d, #112a5c);
+  padding: 20px;
+}
+
+/* ===== Card ===== */
+.otp-card {
+  background: #ffffff;
+  padding: 40px 35px;
+  border-radius: 14px;
+  text-align: center;
+  width: 360px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.4s ease;
+}
+
+/* Heading */
+.otp-card h2 {
+  margin-bottom: 10px;
+  color: #0b1c3d;
+  font-weight: 600;
+}
+
+/* Subtitle */
+.otp-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+  word-break: break-word;
+}
+
+/* ===== OTP Input ===== */
+.otp-input {
+  width: 100%;
+  padding: 14px;
+  font-size: 22px;
+  letter-spacing: 6px;
+  text-align: center;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.otp-input:focus {
+  border-color: #0b1c3d;
+  box-shadow: 0 0 0 2px rgba(11, 28, 61, 0.1);
+}
+
+/* ===== Timer ===== */
+.otp-timer {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #555;
+}
+
+.otp-timer span {
+  color: #e53935;
+  font-weight: 600;
+}
+
+/* Expired message */
+.otp-expired {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #e53935;
+  font-weight: 500;
+}
+
+/* ===== Buttons ===== */
+.otp-btn {
+  width: 100%;
+  padding: 13px;
+  margin-top: 18px;
+  background: #0b1c3d;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.otp-btn:hover {
+  background: #112a5c;
+}
+
+.otp-btn:disabled {
+  background: #9aa5b5;
+  cursor: not-allowed;
+}
+
+/* Resend button */
+.resend-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background: transparent;
+  border: 1px solid #0b1c3d;
+  border-radius: 8px;
+  color: #0b1c3d;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.resend-btn:hover {
+  background: #0b1c3d;
+  color: #fff;
+}
+
+.resend-btn:disabled {
+  border-color: #ccc;
+  color: #aaa;
+  background: transparent;
+  cursor: not-allowed;
+}
+
+/* ===== Animation ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

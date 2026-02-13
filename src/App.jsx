@@ -28,6 +28,9 @@ import OrderDetails from "./pages/OrderDetails";
 import Faq from "./pages/Faq";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsConditions";
+import VerifyEmail from "./pages/VerifyEmail";
+import VerifyOtp from "./pages/VerifyOtp";
+import VerifyPending from "./pages/VerifyPending";
 
 /* Components */
 import Navbar from "./components/Navbar";
@@ -62,7 +65,11 @@ function Layout() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-pending" element={<VerifyPending />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />{" "}
+        {/* ✅ Added */}
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
         {/* ✅ Added */}
         {/* Protected Routes */}
         <Route

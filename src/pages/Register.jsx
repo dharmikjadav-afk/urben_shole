@@ -4,7 +4,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import axios from "axios";
 import { api } from "../api/api";
 import { AuthContext } from "../context/AuthContext";
-import { toast } from "react-toastify"; // 🔹 Toast
+import { toast } from "react-toastify";
 import "./Login.css";
 
 const isStrongPassword = (password) => {
@@ -14,7 +14,7 @@ const isStrongPassword = (password) => {
 
 function Register() {
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const { login } = useContext(AuthContext); // kept (not used)
 
   const [form, setForm] = useState({
     name: "",
@@ -34,6 +34,9 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Normalize email (important for OTP matching)
+    const email = form.email.trim().toLowerCase();
+
     // Password strength
     if (!isStrongPassword(form.password)) {
       toast.error(
@@ -52,27 +55,22 @@ function Register() {
       setLoading(true);
 
       const response = await axios.post(api.register, {
-        username: form.name,
-        email: form.email,
+        username: form.name.trim(),
+        email: email,
         password: form.password,
       });
 
       const data = response.data;
 
-      // Save token & user
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      toast.success(data.message || "OTP sent to your email");
 
-      // Update context
-      login(data.user);
-
-      // Success notification
-      toast.success("Account created successfully! Welcome to UrbanSole");
-
-      // Redirect to Home
-      navigate("/");
+      // Redirect to OTP page
+      navigate("/verify-otp", {
+        state: { email },
+      });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Registration failed");
+      const message = error.response?.data?.message || "Registration failed";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

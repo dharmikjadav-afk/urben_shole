@@ -4,7 +4,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import "./Login.css";
 import { AuthContext } from "../context/AuthContext";
 import { api } from "../api/api";
-import { toast } from "react-toastify"; // 🔹 Toast
+import { toast } from "react-toastify";
 
 function Login() {
   const navigate = useNavigate();
@@ -39,22 +39,33 @@ function Login() {
 
       const data = await response.json();
 
+      // =============================
+      // If login failed
+      // =============================
       if (!response.ok) {
+        // 🔴 If email not verified → redirect to OTP page
+        if (data.notVerified) {
+          toast.info("Please verify your email. OTP sent.");
+          navigate("/verify-otp", {
+            state: { email: data.email || email },
+          });
+          return;
+        }
+
         toast.error(data.message || "Invalid email or password");
         return;
       }
 
-      // Save token
+      // =============================
+      // Success login
+      // =============================
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // Update AuthContext
       login(data.user);
 
-      // Success notification
       toast.success(`Welcome back, ${data.user.username}!`);
 
-      // Redirect
       navigate("/");
     } catch (err) {
       console.error(err);

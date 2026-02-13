@@ -8,35 +8,111 @@ const nodemailer = require("nodemailer");
 
 const router = express.Router();
 
-// ================= REGISTER USER =================
+// ================= EMAIL TRANSPORTER =================
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// ================= HELPER =================
+const generateOTP = () =>
+  Math.floor(100000 + Math.random() * 900000).toString();
+
+// ======================================================
+// REGISTER (SEND OTP)
+// ======================================================
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    let { username, email, password } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+    email = email.trim().toLowerCase();
+
+    let user = await User.findOne({ email });
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await User.create({
-      username,
-      email,
-      password: hashedPassword,
+    const otp = generateOTP();
+    const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
+
+    if (user) {
+      if (user.isVerified) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+
+      user.username = username;
+      user.password = hashedPassword;
+      user.otp = otp;
+      user.otpExpire = otpExpire;
+      user.isVerified = false;
+      await user.save();
+    } else {
+      user = await User.create({
+        username,
+        email,
+        password: hashedPassword,
+        otp,
+        otpExpire,
+        isVerified: false,
+      });
+    }
+
+    await transporter.sendMail({
+      to: user.email,
+      subject: "UrbanSole Email OTP Verification",
+      html: `<h2>Your OTP: ${otp}</h2><p>Valid for 10 minutes</p>`,
     });
+
+    res.status(201).json({
+      message: "OTP sent to your email",
+      email: user.email,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ======================================================
+// VERIFY OTP
+// ======================================================
+router.post("/verify-otp", async (req, res) => {
+  try {
+    let { email, otp } = req.body;
+
+    email = email.trim().toLowerCase();
+    otp = String(otp).trim();
+
+    const user = await User.findOne({ email });
+
+    if (!user) return res.status(400).json({ message: "User not found" });
+
+    if (!user.otp)
+      return res.status(400).json({ message: "Please resend OTP" });
+
+    if (user.otpExpire < Date.now())
+      return res.status(400).json({ message: "OTP expired" });
+
+    if (user.otp !== otp)
+      return res.status(400).json({ message: "Invalid OTP" });
+
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpire = null;
+    await user.save();
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    res.status(201).json({
-      message: "User registered successfully",
+    res.json({
+      message: "Email verified successfully",
       token,
       user: {
         id: user._id,
@@ -44,35 +120,83 @@ router.post("/register", async (req, res) => {
         email: user.email,
       },
     });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+  } catch {
+    res.status(500).json({ message: "Verification failed" });
   }
 });
 
-// ================= LOGIN USER =================
-router.post("/login", async (req, res) => {
+// ======================================================
+// RESEND OTP
+// ======================================================
+router.post("/resend-otp", async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
-    }
+    let { email } = req.body;
+    email = email.trim().toLowerCase();
 
     const user = await User.findOne({ email });
-    if (!user) {
+    if (!user) return res.status(400).json({ message: "User not found" });
+
+    if (user.isVerified)
+      return res.status(400).json({ message: "User already verified" });
+
+    const otp = generateOTP();
+    user.otp = otp;
+    user.otpExpire = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    await transporter.sendMail({
+      to: user.email,
+      subject: "UrbanSole OTP Resend",
+      html: `<h2>${otp}</h2><p>Valid for 10 minutes</p>`,
+    });
+
+    res.json({ message: "OTP resent successfully" });
+  } catch {
+    res.status(500).json({ message: "Failed to resend OTP" });
+  }
+});
+
+// ======================================================
+// LOGIN
+// ======================================================
+router.post("/login", async (req, res) => {
+  try {
+    let { email, password } = req.body;
+    email = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email });
+    if (!user)
       return res.status(400).json({ message: "Invalid email or password" });
+
+    // Not verified → send OTP again + redirect
+    if (!user.isVerified) {
+      const otp = generateOTP();
+      user.otp = otp;
+      user.otpExpire = new Date(Date.now() + 10 * 60 * 1000);
+      await user.save();
+
+      await transporter.sendMail({
+        to: user.email,
+        subject: "Verify your email",
+        html: `<h2>${otp}</h2><p>Please verify your email</p>`,
+      });
+
+      return res.status(400).json({
+        message: "Email not verified. OTP sent again.",
+        redirectToVerify: true,
+        email: user.email,
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    if (!isMatch)
       return res.status(400).json({ message: "Invalid email or password" });
-    }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    res.status(200).json({
+    res.json({
       message: "Login successful",
       token,
       user: {
@@ -81,72 +205,53 @@ router.post("/login", async (req, res) => {
         email: user.email,
       },
     });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+  } catch {
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-// ================= FORGOT PASSWORD =================
+// ======================================================
+// FORGOT PASSWORD (SEND LINK)
+// ======================================================
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
-
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
 
-    // Generate reset token
+    if (!user) return res.status(400).json({ message: "User not found" });
+
     const resetToken = crypto.randomBytes(32).toString("hex");
-
-    // Hash token before saving
     const hashedToken = crypto
       .createHash("sha256")
       .update(resetToken)
       .digest("hex");
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 min
+    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
     await user.save();
 
-    // Create reset link (ONLY ONCE)
-    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
-
-    // Email transporter
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    const link = `http://localhost:5173/reset-password/${resetToken}`;
 
     await transporter.sendMail({
       to: user.email,
-      subject: "UrbanSole Password Reset",
-      html: `
-        <h3>Password Reset Request</h3>
-        <p>Click the link below to reset your password:</p>
-        <a href="${resetLink}">${resetLink}</a>
-        <p>This link will expire in 15 minutes.</p>
-      `,
+      subject: "Reset Password",
+      html: `<a href="${link}">Reset Password</a>`,
     });
 
-    res.json({ message: "Password reset link sent to email" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Email sending failed", error: error.message });
+    res.json({ message: "Password reset link sent" });
+  } catch {
+    res.status(500).json({ message: "Email sending failed" });
   }
 });
 
-// ================= RESET PASSWORD =================
+// ======================================================
+// RESET PASSWORD (IMPORTANT - fixes your error)
+// ======================================================
 router.post("/reset-password/:token", async (req, res) => {
   try {
-    const { token } = req.params;
     const { password } = req.body;
+    const token = req.params.token;
 
-    // Hash token to match DB
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await User.findOne({
@@ -154,32 +259,25 @@ router.post("/reset-password/:token", async (req, res) => {
       resetPasswordExpire: { $gt: Date.now() },
     });
 
-    if (!user) {
-      return res.status(400).json({ message: "Token expired or invalid" });
-    }
+    if (!user)
+      return res.status(400).json({ message: "Token invalid or expired" });
 
-    // Hash new password
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);
 
-    // Clear reset fields
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
     await user.save();
 
     res.json({ message: "Password reset successful" });
-  } catch (error) {
-    res.status(500).json({ message: "Reset failed", error: error.message });
+  } catch {
+    res.status(500).json({ message: "Reset failed" });
   }
 });
 
-// ================= PROTECTED ROUTE =================
+// ======================================================
 router.get("/profile", protect, (req, res) => {
-  res.json({
-    message: "Profile accessed",
-    user: req.user,
-  });
+  res.json({ user: req.user });
 });
 
 module.exports = router;

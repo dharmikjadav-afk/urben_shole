@@ -25,6 +25,21 @@ const userSchema = new mongoose.Schema(
       default: "user", // user | admin (future)
     },
 
+    // ===== Email OTP Verification Fields =====
+    isVerified: {
+      type: Boolean,
+      default: false, // user must verify OTP
+    },
+
+    otp: {
+      type: String,
+    },
+
+    otpExpire: {
+      type: Date,
+    },
+    // ==========================================
+
     // ===== Forgot Password Fields =====
     resetPasswordToken: {
       type: String,

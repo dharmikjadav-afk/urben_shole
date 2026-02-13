@@ -4,24 +4,39 @@ export const AuthContext = createContext();
 
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // NEW
+  const [loading, setLoading] = useState(true);
 
   // Load user on app start
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("token");
+    try {
+      const storedUser = localStorage.getItem("user");
+      const token = localStorage.getItem("token");
 
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
+      // Only set user if both exist
+      if (storedUser && token) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      // If JSON is corrupted, clear storage
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
     }
 
-    setLoading(false); // Done checking
+    setLoading(false);
   }, []);
 
-  const login = (userData) => {
-    localStorage.setItem("user", JSON.stringify(userData));
+  // Login (used after Login or OTP verification)
+  const login = (userData, tokenData) => {
+    if (userData) {
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+    }
+
+    if (tokenData) {
+      localStorage.setItem("token", tokenData);
+    }
+
     localStorage.setItem("isLoggedIn", "true");
-    setUser(userData);
   };
 
   const logout = () => {
@@ -33,7 +48,7 @@ function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
-      {!loading && children} {/* IMPORTANT */}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
