@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useContext, useState, useEffect } from "react";
-import products from "../data/products";
+import axios from "../api/api";
 import { CartContext } from "../context/CartContext";
 import { WishlistContext } from "../context/WishlistContext";
 import { AuthContext } from "../context/AuthContext";
@@ -11,6 +11,11 @@ import {
   FiRefreshCw,
   FiShield,
 } from "react-icons/fi";
+import {
+  addToCart as addCartAPI,
+  addToWishlist as addWishlistAPI,
+} from "../api/api";
+import { toast } from "react-toastify";
 import "./ProductDetail.css";
 
 const SIZES = [6, 7, 8, 9, 10];
@@ -18,14 +23,14 @@ const SIZES = [6, 7, 8, 9, 10];
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const { cart, addToCart } = useContext(CartContext);
-
-  const product = products.find((p) => p.id === Number(id));
-
   const { user } = useContext(AuthContext);
-
   const { addToWishlist, removeFromWishlist, isInWishlist } =
     useContext(WishlistContext);
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [qty, setQty] = useState(1);
   const [size, setSize] = useState(null);
@@ -33,23 +38,34 @@ function ProductDetail() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+
+    const fetchProduct = async () => {
+      try {
+        const res = await axios.get(`/api/products/${id}`);
+        setProduct(res.data);
+      } catch (error) {
+        console.error("Product load error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  if (loading) {
+    return <h2 style={{ padding: "120px" }}>Loading product...</h2>;
+  }
 
   if (!product) {
     return <h2 style={{ padding: "120px" }}>Product not found</h2>;
   }
 
-  const inWishlist = isInWishlist(product.id);
+  const productId = product._id;
+  const inWishlist = isInWishlist(productId);
 
-  const requireLogin = () => {
-    if (!user) {
-      navigate("/login");
-      return true;
-    }
-    return false;
-  };
-
-  const handleAddToCart = () => {
+  // ================= Add to Cart =================
+  const handleAddToCart = async () => {
     if (!user) {
       navigate("/login");
       return;
@@ -60,20 +76,24 @@ function ProductDetail() {
       return;
     }
 
-    const exists = cart.find(
-      (item) => item.id === product.id && item.size === size
-    );
+    const item = { ...product, size };
 
-    if (exists) {
-      for (let i = 0; i < qty; i++) {
-        addToCart({ ...product, size });
-      }
-    } else {
-      addToCart({ ...product, size });
+    for (let i = 0; i < qty; i++) {
+      addToCart(item);
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      await addCartAPI(productId, token);
+      toast.success("Added to cart");
+    } catch (error) {
+      console.error("Cart API Error:", error);
+      toast.error("Failed to save cart");
     }
   };
 
-  const handleBuyNow = () => {
+  // ================= Buy Now =================
+  const handleBuyNow = async () => {
     if (!user) {
       navigate("/login");
       return;
@@ -84,31 +104,54 @@ function ProductDetail() {
       return;
     }
 
+    const item = { ...product, size };
+    addToCart(item);
 
-    const exists = cart.find(
-      (item) => item.id === product.id && item.size === size
-    );
-
-    if (!exists) {
-      addToCart({ ...product, size });
+    try {
+      const token = localStorage.getItem("token");
+      await addCartAPI(productId, token);
+    } catch (error) {
+      console.error("Cart API Error:", error);
     }
 
     navigate("/checkout");
   };
 
+  // ================= Wishlist =================
+  const handleWishlist = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (inWishlist) {
+      removeFromWishlist(productId);
+      toast.info("Removed from wishlist");
+      return;
+    }
+
+    addToWishlist(product);
+
+    try {
+      const token = localStorage.getItem("token");
+      await addWishlistAPI(productId, token);
+      toast.success("Added to wishlist");
+    } catch (error) {
+      console.error("Wishlist API Error:", error);
+      toast.error("Failed to save wishlist");
+    }
+  };
+
   return (
     <section className="product-detail">
-
       <div className="breadcrumb">
         Home / {product.category} / <span>{product.name}</span>
       </div>
 
       <div className="product-detail-grid">
-
         <div className="product-image">
           <img src={product.image} alt={product.name} />
         </div>
-
 
         <div className="product-info">
           <h1>{product.name}</h1>
@@ -116,12 +159,11 @@ function ProductDetail() {
           <p className="price">₹{product.price}</p>
 
           <p className="description">
-            Premium quality footwear designed for comfort, durability, and
-            everyday confidence. Crafted with breathable materials and a
-            lightweight sole.
+            {product.description ||
+              "Premium quality footwear designed for comfort, durability, and everyday confidence."}
           </p>
 
-
+          {/* Size */}
           <div className="size-section">
             <h4>Select Size (UK)</h4>
             <div className="size-grid">
@@ -141,6 +183,7 @@ function ProductDetail() {
             {error && <p className="size-error">{error}</p>}
           </div>
 
+          {/* Actions */}
           <div className="actions">
             <button className="add-cart-btn" onClick={handleAddToCart}>
               <FiShoppingCart />
@@ -149,11 +192,7 @@ function ProductDetail() {
 
             <button
               className={`wishlist-btn ${inWishlist ? "active" : ""}`}
-              onClick={() =>
-                inWishlist
-                  ? removeFromWishlist(product.id)
-                  : addToWishlist(product)
-              }
+              onClick={handleWishlist}
             >
               <FiHeart />
             </button>

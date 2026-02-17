@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { WishlistContext } from "../context/WishlistContext";
 import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
+import { addToWishlist as addWishlistAPI } from "../api/api";
+import { addToCart as addCartAPI } from "../api/api";
+import { toast } from "react-toastify";
 import "./ProductCard.css";
 
 function ProductCard({ product }) {
@@ -14,29 +17,58 @@ function ProductCard({ product }) {
   const { addToWishlist, removeFromWishlist, isInWishlist } =
     useContext(WishlistContext);
 
-  const inWishlist = isInWishlist(product.id);
+  // Use MongoDB _id if available, otherwise fallback to id
+  const productId = product._id || product.id;
 
+  const inWishlist = isInWishlist(productId);
 
   const openProductDetail = () => {
-    navigate(`/product/${product.id}`);
+    navigate(`/product/${productId}`);
   };
 
-  const handleWishlist = () => {
+  // ================= Wishlist =================
+  const handleWishlist = async () => {
     if (!user) {
       navigate("/login");
       return;
     }
 
-    inWishlist ? removeFromWishlist(product.id) : addToWishlist(product);
+    if (inWishlist) {
+      removeFromWishlist(productId);
+      toast.info("Removed from wishlist");
+    } else {
+      addToWishlist(product);
+
+      try {
+        const token = localStorage.getItem("token");
+        await addWishlistAPI(productId, token);
+        toast.success("Added to wishlist");
+      } catch (error) {
+        console.error("Wishlist API Error:", error);
+        toast.error("Failed to save wishlist");
+      }
+    }
   };
 
-  const handleAddToCart = () => {
+  // ================= Cart =================
+  const handleAddToCart = async () => {
     if (!user) {
       navigate("/login");
       return;
     }
 
+    // Update UI
     addToCart(product);
+
+    // Save to backend
+    try {
+      const token = localStorage.getItem("token");
+      await addCartAPI(productId, token);
+      toast.success("Added to cart");
+    } catch (error) {
+      console.error("Cart API Error:", error);
+      toast.error("Failed to save cart");
+    }
   };
 
   return (
@@ -49,14 +81,11 @@ function ProductCard({ product }) {
         <FiHeart />
       </button>
 
-
       <div className="product-img" onClick={openProductDetail}>
         <img src={product.image} alt={product.name} />
       </div>
 
-
       <div className="product-info">
-
         <h4 className="product-title" onClick={openProductDetail}>
           {product.name}
         </h4>

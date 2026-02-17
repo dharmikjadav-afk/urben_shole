@@ -1,15 +1,38 @@
-import { useState } from "react";
-import products from "../data/products";
+import { useState, useEffect } from "react";
 import ProductCard from "../components/ProductCard";
+import { getProducts } from "../api/api";
 import "./Women.css";
 
 function Women() {
-  const womenProducts = products.filter((p) => p.category === "women");
+  const [womenProducts, setWomenProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("");
   const [priceRange, setPriceRange] = useState(4000);
   const [priceBucket, setPriceBucket] = useState("");
+
+  // Fetch products from backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await getProducts();
+
+        // Filter only women products
+        const womenOnly = res.data.filter(
+          (p) => p.category.toLowerCase() === "women",
+        );
+
+        setWomenProducts(womenOnly);
+      } catch (error) {
+        console.error("Failed to load women products", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const filteredProducts = womenProducts
     .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
@@ -29,6 +52,7 @@ function Women() {
 
   return (
     <section className="women-page">
+      {/* HERO */}
       <div className="women-hero" data-aos="fade-up">
         <div className="women-hero-overlay" />
         <div className="women-hero-content">
@@ -37,6 +61,7 @@ function Women() {
         </div>
       </div>
 
+      {/* Filters */}
       <div className="women-filters" data-aos="fade-up">
         <input
           type="text"
@@ -75,10 +100,17 @@ function Women() {
         Showing {filteredProducts.length} of {womenProducts.length} products
       </p>
 
+      {/* Products */}
       <div className="women-grid">
-        {filteredProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+        {loading ? (
+          <p>Loading products...</p>
+        ) : filteredProducts.length === 0 ? (
+          <p>No products found</p>
+        ) : (
+          filteredProducts.map((product) => (
+            <ProductCard key={product._id} product={product} />
+          ))
+        )}
       </div>
     </section>
   );

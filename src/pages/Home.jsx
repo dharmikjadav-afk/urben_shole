@@ -1,4 +1,4 @@
-import products from "../data/products";
+import { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import "./Home.css";
 import { Link } from "react-router-dom";
@@ -9,8 +9,27 @@ import {
   FiHeadphones,
   FiStar,
 } from "react-icons/fi";
+import { getProducts } from "../api/api";
 
 function Home() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch products from backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await getProducts();
+        setProducts(res.data);
+      } catch (error) {
+        console.error("Failed to load products", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const scrollToCategories = () => {
     const section = document.getElementById("categories");
@@ -20,8 +39,8 @@ function Home() {
   };
 
   return (
-    <> 
-
+    <>
+      {/* HERO */}
       <section className="hero">
         <div className="hero-overlay" />
         <div className="hero-glow" />
@@ -40,11 +59,9 @@ function Home() {
           </p>
 
           <div className="hero-actions" data-aos="fade-up" data-aos-delay="200">
-
             <Link to="/shop" className="btn-primary">
               Shop Now
             </Link>
-
 
             <button
               type="button"
@@ -57,7 +74,7 @@ function Home() {
         </div>
       </section>
 
-
+      {/* CATEGORIES */}
       <section className="categories-section" id="categories">
         <div className="categories-header">
           <h2>Shop by Category</h2>
@@ -81,7 +98,7 @@ function Home() {
               <div className="category-overlay">
                 <h3>Women</h3>
                 <span>Explore Collection →</span>
-              </div>  
+              </div>
             </div>
           </Link>
 
@@ -97,7 +114,7 @@ function Home() {
         </div>
       </section>
 
-
+      {/* FEATURED */}
       <section className="featured">
         <div className="section-header" data-aos="fade-up">
           <h2>Featured Products</h2>
@@ -105,12 +122,19 @@ function Home() {
         </div>
 
         <div className="product-grid">
-          {products.slice(0, 4).map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {loading ? (
+            <p>Loading products...</p>
+          ) : (
+            products
+              .slice(0, 4)
+              .map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))
+          )}
         </div>
       </section>
 
+      {/* TRUST SECTION */}
       <section className="trust-section">
         <div className="section-header" data-aos="fade-up">
           <h2>Why Choose UrbanSole</h2>
@@ -152,34 +176,7 @@ function Home() {
         </div>
       </section>
 
-
-      <section className="promo-banner" data-aos="fade-up">
-        <div className="promo-content">
-          <span className="promo-tag">Limited Time</span>
-
-          <h2>
-            Summer Collection <span>2026</span>
-          </h2>
-
-          <p>
-            Discover fresh styles crafted for comfort and confidence. Enjoy
-            exclusive discounts on selected designs.
-          </p>
-
-          <Link to="/shop" className="promo-btn">
-            Shop Collection
-          </Link>
-        </div>
-
-        <div className="promo-image">
-          <img
-            src="https://images.unsplash.com/photo-1549298916-b41d501d3772"
-            alt="Summer Shoes Collection"
-          />
-        </div>
-      </section>
-
-
+      {/* NEW ARRIVALS */}
       <section className="new-arrivals">
         <div className="section-header" data-aos="fade-up">
           <h2>New Arrivals</h2>
@@ -187,17 +184,20 @@ function Home() {
         </div>
 
         <div className="product-grid">
-          {products
-            .slice()
-            .reverse()
-            .slice(0, 4)
-            .map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          {loading ? (
+            <p>Loading products...</p>
+          ) : (
+            [...products]
+              .reverse()
+              .slice(0, 4)
+              .map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))
+          )}
         </div>
       </section>
 
-
+      {/* TESTIMONIALS */}
       <section className="testimonials">
         <div className="section-header" data-aos="fade-up">
           <h2>What Our Customers Say</h2>
@@ -210,27 +210,22 @@ function Home() {
               name: "Rahul Mehta",
               img: "https://randomuser.me/api/portraits/men/32.jpg",
               stars: 5,
-              text: "The quality is excellent and the comfort is unmatched. UrbanSole has become my go-to brand.",
+              text: "The quality is excellent and the comfort is unmatched.",
             },
             {
               name: "Ananya Sharma",
               img: "https://randomuser.me/api/portraits/women/44.jpg",
               stars: 4,
-              text: "Stylish, lightweight, and durable. The delivery was fast and the packaging felt premium.",
+              text: "Stylish, lightweight, and durable.",
             },
             {
               name: "Arjun Patel",
               img: "https://randomuser.me/api/portraits/men/54.jpg",
               stars: 4,
-              text: "Great experience overall. The shoes fit perfectly and the return policy is hassle-free.",
+              text: "Great experience overall.",
             },
           ].map((review, i) => (
-            <div
-              key={i}
-              className="testimonial-card"
-              data-aos="fade-up"
-              data-aos-delay={(i + 1) * 100}
-            >
+            <div key={i} className="testimonial-card">
               <div className="testimonial-header">
                 <img src={review.img} alt={review.name} />
                 <div>
@@ -254,14 +249,11 @@ function Home() {
         </div>
       </section>
 
-
+      {/* NEWSLETTER */}
       <section className="newsletter" data-aos="fade-up">
         <div className="newsletter-inner">
           <h2>Join UrbanSole</h2>
-          <p>
-            Subscribe to get exclusive offers, new arrivals, and early access to
-            premium collections.
-          </p>
+          <p>Subscribe for exclusive offers and new arrivals.</p>
 
           <form
             className="newsletter-form"

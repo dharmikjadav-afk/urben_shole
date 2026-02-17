@@ -2,19 +2,50 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { WishlistContext } from "../context/WishlistContext";
 import { CartContext } from "../context/CartContext";
+import {
+  removeFromWishlist as removeWishlistAPI,
+  addToCart as addCartAPI,
+} from "../api/api";
 import { FiTrash2, FiShoppingCart } from "react-icons/fi";
+import { toast } from "react-toastify";
 import "./Wishlist.css";
 
 function Wishlist() {
   const navigate = useNavigate();
 
   const { wishlist, removeFromWishlist } = useContext(WishlistContext);
-
   const { addToCart } = useContext(CartContext);
 
-  const handleMoveToCart = (item) => {
-    addToCart(item); 
-    removeFromWishlist(item.id); 
+  const token = localStorage.getItem("token");
+
+  // ================= Move to Cart =================
+  const handleMoveToCart = async (item) => {
+    // Update UI
+    addToCart(item);
+    removeFromWishlist(item.id);
+
+    try {
+      await addCartAPI(item._id || item.id, token);
+      await removeWishlistAPI(item._id || item.id, token);
+      toast.success("Moved to cart");
+    } catch (error) {
+      console.error("Move to Cart Error:", error);
+      toast.error("Failed to update server");
+    }
+  };
+
+  // ================= Remove =================
+  const handleRemove = async (item) => {
+    // Update UI
+    removeFromWishlist(item.id);
+
+    try {
+      await removeWishlistAPI(item._id || item.id, token);
+      toast.info("Removed from wishlist");
+    } catch (error) {
+      console.error("Remove Wishlist Error:", error);
+      toast.error("Failed to update server");
+    }
   };
 
   return (
@@ -30,7 +61,7 @@ function Wishlist() {
         <div className="wishlist-grid">
           {wishlist.map((item) => (
             <div className="wishlist-card" key={item.id}>
-              {/* IMAGE → PRODUCT DETAIL */}
+              {/* IMAGE */}
               <div
                 className="wishlist-img"
                 onClick={() => navigate(`/product/${item.id}`)}
@@ -50,7 +81,6 @@ function Wishlist() {
                 <p className="wishlist-price">₹{item.price}</p>
 
                 <div className="wishlist-actions">
-  
                   <button
                     className="wishlist-cart-btn"
                     onClick={() => handleMoveToCart(item)}
@@ -59,10 +89,9 @@ function Wishlist() {
                     Add to Cart
                   </button>
 
-    
                   <button
                     className="wishlist-remove-btn"
-                    onClick={() => removeFromWishlist(item.id)}
+                    onClick={() => handleRemove(item)}
                   >
                     <FiTrash2 />
                     Remove

@@ -21,6 +21,19 @@ const transporter = nodemailer.createTransport({
 const generateOTP = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
+// Generate JWT
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" },
+  );
+};
+
 // ======================================================
 // REGISTER (SEND OTP)
 // ======================================================
@@ -75,6 +88,7 @@ router.post("/register", async (req, res) => {
       email: user.email,
     });
   } catch (error) {
+    console.error("Register Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -107,9 +121,7 @@ router.post("/verify-otp", async (req, res) => {
     user.otpExpire = null;
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = generateToken(user);
 
     res.json({
       message: "Email verified successfully",
@@ -120,7 +132,8 @@ router.post("/verify-otp", async (req, res) => {
         email: user.email,
       },
     });
-  } catch {
+  } catch (error) {
+    console.error("Verify OTP Error:", error);
     res.status(500).json({ message: "Verification failed" });
   }
 });
@@ -151,7 +164,8 @@ router.post("/resend-otp", async (req, res) => {
     });
 
     res.json({ message: "OTP resent successfully" });
-  } catch {
+  } catch (error) {
+    console.error("Resend OTP Error:", error);
     res.status(500).json({ message: "Failed to resend OTP" });
   }
 });
@@ -168,7 +182,7 @@ router.post("/login", async (req, res) => {
     if (!user)
       return res.status(400).json({ message: "Invalid email or password" });
 
-    // Not verified → send OTP again + redirect
+    // If not verified → send OTP again
     if (!user.isVerified) {
       const otp = generateOTP();
       user.otp = otp;
@@ -192,9 +206,7 @@ router.post("/login", async (req, res) => {
     if (!isMatch)
       return res.status(400).json({ message: "Invalid email or password" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = generateToken(user);
 
     res.json({
       message: "Login successful",
@@ -205,13 +217,14 @@ router.post("/login", async (req, res) => {
         email: user.email,
       },
     });
-  } catch {
+  } catch (error) {
+    console.error("Login Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // ======================================================
-// FORGOT PASSWORD (SEND LINK)
+// FORGOT PASSWORD
 // ======================================================
 router.post("/forgot-password", async (req, res) => {
   try {
@@ -239,13 +252,14 @@ router.post("/forgot-password", async (req, res) => {
     });
 
     res.json({ message: "Password reset link sent" });
-  } catch {
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
     res.status(500).json({ message: "Email sending failed" });
   }
 });
 
 // ======================================================
-// RESET PASSWORD (IMPORTANT - fixes your error)
+// RESET PASSWORD
 // ======================================================
 router.post("/reset-password/:token", async (req, res) => {
   try {
@@ -270,11 +284,14 @@ router.post("/reset-password/:token", async (req, res) => {
     await user.save();
 
     res.json({ message: "Password reset successful" });
-  } catch {
+  } catch (error) {
+    console.error("Reset Password Error:", error);
     res.status(500).json({ message: "Reset failed" });
   }
 });
 
+// ======================================================
+// PROFILE (used for Cart/Wishlist user auth)
 // ======================================================
 router.get("/profile", protect, (req, res) => {
   res.json({ user: req.user });
