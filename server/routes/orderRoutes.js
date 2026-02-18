@@ -1,105 +1,38 @@
 const express = require("express");
-const Order = require("../models/Order");
+const router = express.Router();
 const protect = require("../middleware/authMiddleware");
 const adminOnly = require("../middleware/adminMiddleware");
 
-const router = express.Router();
+// Import controller
+const {
+  createOrder,
+  getUserOrders,
+  getOrderById,
+  getAllOrders,
+  markOrderPaid,
+  markOrderDelivered,
+} = require("../controllers/orderController");
 
-// CREATE ORDER (USER)
-router.post("/", protect, async (req, res) => {
-  try {
-    const { orderItems, totalPrice } = req.body;
+// ================= USER ROUTES =================
 
-    if (!orderItems || orderItems.length === 0) {
-      return res.status(400).json({ message: "No order items" });
-    }
+// Create order
+router.post("/", protect, createOrder);
 
-    const order = await Order.create({
-      user: req.user._id,
-      orderItems,
-      totalPrice,
-    });
+// Get logged-in user's orders
+router.get("/my", protect, getUserOrders);
 
-    res.status(201).json({
-      message: "Order placed successfully",
-      order,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
+// Get single order by ID
+router.get("/:id", protect, getOrderById);
 
-// GET MY ORDERS (USER)
-router.get("/my", protect, async (req, res) => {
-  try {
-    const orders = await Order.find({ user: req.user._id }).populate(
-      "orderItems.product",
-      "name price image",
-    );
+// ================= ADMIN ROUTES =================
 
-    res.json(orders);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
+// Get all orders
+router.get("/", protect, adminOnly, getAllOrders);
 
-// GET ALL ORDERS (ADMIN)
-router.get("/", protect, adminOnly, async (req, res) => {
-  try {
-    const orders = await Order.find()
-      .populate("user", "username email")
-      .populate("orderItems.product", "name price");
+// Mark as paid
+router.put("/:id/pay", protect, adminOnly, markOrderPaid);
 
-    res.json(orders);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
-// MARK ORDER AS PAID (ADMIN)
-router.put("/:id/pay", protect, adminOnly, async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    order.isPaid = true;
-    order.paidAt = Date.now();
-
-    const updatedOrder = await order.save();
-
-    res.json({
-      message: "Order marked as paid",
-      order: updatedOrder,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
-// MARK ORDER AS DELIVERED (ADMIN)
-router.put("/:id/deliver", protect, adminOnly, async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    order.isDelivered = true;
-    order.deliveredAt = Date.now();
-
-    const updatedOrder = await order.save();
-
-    res.json({
-      message: "Order marked as delivered",
-      order: updatedOrder,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
+// Mark as delivered
+router.put("/:id/deliver", protect, adminOnly, markOrderDelivered);
 
 module.exports = router;

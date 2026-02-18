@@ -7,6 +7,9 @@ function CartProvider({ children }) {
   const { user } = useContext(AuthContext);
   const [cart, setCart] = useState([]);
 
+  // Helper → support both id and _id
+  const getProductId = (product) => product._id || product.id;
+
   const clearCart = () => {
     if (!user) return;
 
@@ -14,7 +17,7 @@ function CartProvider({ children }) {
     localStorage.removeItem(`cart_${user.email}`);
   };
 
-
+  // Load cart when user changes
   useEffect(() => {
     if (user?.email) {
       const stored =
@@ -25,51 +28,58 @@ function CartProvider({ children }) {
     }
   }, [user]);
 
-
+  // Save cart
   useEffect(() => {
     if (user?.email) {
       localStorage.setItem(`cart_${user.email}`, JSON.stringify(cart));
     }
   }, [cart, user]);
 
+  // ================= Add to Cart =================
   const addToCart = (product) => {
     if (!user) return;
 
-    const exists = cart.find((item) => item.id === product.id);
+    const productId = getProductId(product);
+
+    const exists = cart.find((item) => getProductId(item) === productId);
 
     if (exists) {
-      setCart(
-        cart.map((item) =>
-          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
-        )
+      setCart((prev) =>
+        prev.map((item) =>
+          getProductId(item) === productId
+            ? { ...item, qty: item.qty + 1 }
+            : item,
+        ),
       );
     } else {
-      setCart([...cart, { ...product, qty: 1 }]);
+      setCart((prev) => [...prev, { ...product, qty: 1 }]);
     }
   };
 
-
+  // ================= Decrease Qty =================
   const decreaseQty = (id) => {
     if (!user) return;
 
-    setCart(
-      cart
-        .map((item) => (item.id === id ? { ...item, qty: item.qty - 1 } : item))
-        .filter((item) => item.qty > 0)
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          getProductId(item) === id ? { ...item, qty: item.qty - 1 } : item,
+        )
+        .filter((item) => item.qty > 0),
     );
   };
 
-
+  // ================= Remove =================
   const removeFromCart = (id) => {
     if (!user) return;
 
-    setCart(cart.filter((item) => item.id !== id));
+    setCart((prev) => prev.filter((item) => getProductId(item) !== id));
   };
 
-
+  // ================= Total =================
   const cartTotal = cart.reduce(
     (total, item) => total + item.price * item.qty,
-    0
+    0,
   );
 
   return (
@@ -79,7 +89,7 @@ function CartProvider({ children }) {
         addToCart,
         decreaseQty,
         removeFromCart,
-        clearCart, 
+        clearCart,
         cartTotal,
       }}
     >

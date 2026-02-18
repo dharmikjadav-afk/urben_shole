@@ -17,9 +17,10 @@ function ProductCard({ product }) {
   const { addToWishlist, removeFromWishlist, isInWishlist } =
     useContext(WishlistContext);
 
-  // Use MongoDB _id if available, otherwise fallback to id
-  const productId = product._id || product.id;
+  // Support both MongoDB _id and local id
+  const productId = product?._id || product?.id;
 
+  // Check wishlist status safely
   const inWishlist = isInWishlist(productId);
 
   const openProductDetail = () => {
@@ -33,20 +34,23 @@ function ProductCard({ product }) {
       return;
     }
 
-    if (inWishlist) {
-      removeFromWishlist(productId);
-      toast.info("Removed from wishlist");
-    } else {
-      addToWishlist(product);
+    try {
+      if (inWishlist) {
+        // Remove locally
+        removeFromWishlist(productId);
+        toast.info("Removed from wishlist");
+      } else {
+        // Add locally (UI update first)
+        addToWishlist(product);
+        toast.success("Added to wishlist");
 
-      try {
+        // Save to backend
         const token = localStorage.getItem("token");
         await addWishlistAPI(productId, token);
-        toast.success("Added to wishlist");
-      } catch (error) {
-        console.error("Wishlist API Error:", error);
-        toast.error("Failed to save wishlist");
       }
+    } catch (error) {
+      console.error("Wishlist API Error:", error);
+      toast.error("Wishlist action failed");
     }
   };
 
@@ -57,10 +61,9 @@ function ProductCard({ product }) {
       return;
     }
 
-    // Update UI
+    // Update UI first
     addToCart(product);
 
-    // Save to backend
     try {
       const token = localStorage.getItem("token");
       await addCartAPI(productId, token);

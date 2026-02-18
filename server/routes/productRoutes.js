@@ -1,98 +1,41 @@
 const express = require("express");
-const Product = require("../models/Product");
+const router = express.Router();
 const protect = require("../middleware/authMiddleware");
 const adminOnly = require("../middleware/adminMiddleware");
 
-const router = express.Router();
+// Import controller
+const {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} = require("../controllers/productController");
 
 // ======================================================
-// GET ALL PRODUCTS
+// PUBLIC ROUTES
+// ======================================================
+
+// Get all products
 // Supports:
 // ?category=men
 // ?search=shoe
-// ======================================================
-router.get("/", async (req, res) => {
-  try {
-    const { category, search } = req.query;
+router.get("/", getProducts);
 
-    let filter = {};
-
-    // Filter by category (men, women, kids)
-    if (category) {
-      filter.category = category;
-    }
-
-    // Search by product name
-    if (search) {
-      filter.name = { $regex: search, $options: "i" };
-    }
-
-    const products = await Product.find(filter).sort({ createdAt: -1 });
-
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
-  }
-});
+// Get single product
+router.get("/:id", getProductById);
 
 // ======================================================
-// GET SINGLE PRODUCT
+// ADMIN ROUTES
 // ======================================================
-router.get("/:id", async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
 
-    if (!product) {
-      return res.status(404).json({
-        message: "Product not found",
-      });
-    }
+// Create product
+router.post("/", protect, adminOnly, createProduct);
 
-    res.json(product);
-  } catch (error) {
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
-  }
-});
+// Update product
+router.put("/:id", protect, adminOnly, updateProduct);
 
-// ======================================================
-// CREATE PRODUCT (ADMIN)
-// ======================================================
-router.post("/", protect, adminOnly, async (req, res) => {
-  try {
-    const { name, description, price, category, image, countInStock } =
-      req.body;
-
-    if (!name || !price || !category || !image) {
-      return res.status(400).json({
-        message: "Required fields: name, price, category, image",
-      });
-    }
-
-    const product = await Product.create({
-      name,
-      description: description || "",
-      price,
-      category,
-      image,
-      countInStock: countInStock || 0,
-    });
-
-    res.status(201).json({
-      message: "Product created successfully",
-      product,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
-  }
-});
+// Delete product
+router.delete("/:id", protect, adminOnly, deleteProduct);
 
 module.exports = router;

@@ -1,51 +1,27 @@
 const express = require("express");
 const router = express.Router();
-const Wishlist = require("../models/Wishlist");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// Get Wishlist
-router.get("/", authMiddleware, async (req, res) => {
-  let wishlist = await Wishlist.findOne({ user: req.user.id }).populate(
-    "products",
-  );
+// Import controller
+const {
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
+  clearWishlist,
+} = require("../controllers/wishlistController");
 
-  if (!wishlist) {
-    wishlist = await Wishlist.create({ user: req.user.id, products: [] });
-  }
+// ================= WISHLIST ROUTES =================
 
-  res.json(wishlist);
-});
+// Get user wishlist
+router.get("/", authMiddleware, getWishlist);
 
-// Add to Wishlist
-router.post("/add", authMiddleware, async (req, res) => {
-  const { productId } = req.body;
+// Add product to wishlist
+router.post("/add", authMiddleware, addToWishlist);
 
-  let wishlist = await Wishlist.findOne({ user: req.user.id });
+// Remove product from wishlist
+router.post("/remove", authMiddleware, removeFromWishlist);
 
-  if (!wishlist) {
-    wishlist = await Wishlist.create({ user: req.user.id, products: [] });
-  }
-
-  if (!wishlist.products.includes(productId)) {
-    wishlist.products.push(productId);
-  }
-
-  await wishlist.save();
-  res.json(wishlist);
-});
-
-// Remove from Wishlist
-router.post("/remove", authMiddleware, async (req, res) => {
-  const { productId } = req.body;
-
-  const wishlist = await Wishlist.findOne({ user: req.user.id });
-
-  wishlist.products = wishlist.products.filter(
-    (id) => id.toString() !== productId,
-  );
-
-  await wishlist.save();
-  res.json(wishlist);
-});
+// Clear wishlist (optional)
+router.post("/clear", authMiddleware, clearWishlist);
 
 module.exports = router;

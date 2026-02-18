@@ -1,57 +1,31 @@
 const express = require("express");
 const router = express.Router();
-const Cart = require("../models/Cart");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// Get Cart
-router.get("/", authMiddleware, async (req, res) => {
-  let cart = await Cart.findOne({ user: req.user.id }).populate(
-    "items.productId",
-  );
+// Import controller
+const {
+  getCart,
+  addToCart,
+  decreaseQty,
+  removeFromCart,
+  clearCart,
+} = require("../controllers/cartController");
 
-  if (!cart) {
-    cart = await Cart.create({ user: req.user.id, items: [] });
-  }
+// ================= CART ROUTES =================
 
-  res.json(cart);
-});
+// Get user cart
+router.get("/", authMiddleware, getCart);
 
-// Add to Cart
-router.post("/add", authMiddleware, async (req, res) => {
-  const { productId } = req.body;
+// Add product to cart
+router.post("/add", authMiddleware, addToCart);
 
-  let cart = await Cart.findOne({ user: req.user.id });
+// Decrease quantity
+router.post("/decrease", authMiddleware, decreaseQty);
 
-  if (!cart) {
-    cart = await Cart.create({ user: req.user.id, items: [] });
-  }
+// Remove product completely
+router.post("/remove", authMiddleware, removeFromCart);
 
-  const itemIndex = cart.items.findIndex(
-    (item) => item.productId.toString() === productId,
-  );
-
-  if (itemIndex > -1) {
-    cart.items[itemIndex].quantity += 1;
-  } else {
-    cart.items.push({ productId, quantity: 1 });
-  }
-
-  await cart.save();
-  res.json(cart);
-});
-
-// Remove from Cart
-router.post("/remove", authMiddleware, async (req, res) => {
-  const { productId } = req.body;
-
-  const cart = await Cart.findOne({ user: req.user.id });
-
-  cart.items = cart.items.filter(
-    (item) => item.productId.toString() !== productId,
-  );
-
-  await cart.save();
-  res.json(cart);
-});
+// Clear entire cart
+router.post("/clear", authMiddleware, clearCart);
 
 module.exports = router;

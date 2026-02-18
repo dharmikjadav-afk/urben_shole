@@ -18,15 +18,20 @@ function Wishlist() {
 
   const token = localStorage.getItem("token");
 
+  // Helper → support both id and _id
+  const getProductId = (item) => item._id || item.id;
+
   // ================= Move to Cart =================
   const handleMoveToCart = async (item) => {
+    const productId = getProductId(item);
+
     // Update UI
     addToCart(item);
-    removeFromWishlist(item.id);
+    removeFromWishlist(productId);
 
     try {
-      await addCartAPI(item._id || item.id, token);
-      await removeWishlistAPI(item._id || item.id, token);
+      await addCartAPI(productId, token);
+      await removeWishlistAPI(productId, token);
       toast.success("Moved to cart");
     } catch (error) {
       console.error("Move to Cart Error:", error);
@@ -36,16 +41,24 @@ function Wishlist() {
 
   // ================= Remove =================
   const handleRemove = async (item) => {
+    const productId = getProductId(item);
+
     // Update UI
-    removeFromWishlist(item.id);
+    removeFromWishlist(productId);
 
     try {
-      await removeWishlistAPI(item._id || item.id, token);
+      await removeWishlistAPI(productId, token);
       toast.info("Removed from wishlist");
     } catch (error) {
       console.error("Remove Wishlist Error:", error);
       toast.error("Failed to update server");
     }
+  };
+
+  // ================= Open Product =================
+  const openProduct = (item) => {
+    const productId = getProductId(item);
+    navigate(`/product/${productId}`);
   };
 
   return (
@@ -59,47 +72,48 @@ function Wishlist() {
         </div>
       ) : (
         <div className="wishlist-grid">
-          {wishlist.map((item) => (
-            <div className="wishlist-card" key={item.id}>
-              {/* IMAGE */}
-              <div
-                className="wishlist-img"
-                onClick={() => navigate(`/product/${item.id}`)}
-              >
-                <img src={item.image} alt={item.name} />
-              </div>
+          {wishlist.map((item) => {
+            const productId = getProductId(item);
 
-              {/* INFO */}
-              <div className="wishlist-info">
-                <h4
-                  className="wishlist-name"
-                  onClick={() => navigate(`/product/${item.id}`)}
-                >
-                  {item.name}
-                </h4>
+            return (
+              <div className="wishlist-card" key={productId}>
+                {/* IMAGE */}
+                <div className="wishlist-img" onClick={() => openProduct(item)}>
+                  <img src={item.image} alt={item.name} />
+                </div>
 
-                <p className="wishlist-price">₹{item.price}</p>
-
-                <div className="wishlist-actions">
-                  <button
-                    className="wishlist-cart-btn"
-                    onClick={() => handleMoveToCart(item)}
+                {/* INFO */}
+                <div className="wishlist-info">
+                  <h4
+                    className="wishlist-name"
+                    onClick={() => openProduct(item)}
                   >
-                    <FiShoppingCart />
-                    Add to Cart
-                  </button>
+                    {item.name}
+                  </h4>
 
-                  <button
-                    className="wishlist-remove-btn"
-                    onClick={() => handleRemove(item)}
-                  >
-                    <FiTrash2 />
-                    Remove
-                  </button>
+                  <p className="wishlist-price">₹{item.price}</p>
+
+                  <div className="wishlist-actions">
+                    <button
+                      className="wishlist-cart-btn"
+                      onClick={() => handleMoveToCart(item)}
+                    >
+                      <FiShoppingCart />
+                      Add to Cart
+                    </button>
+
+                    <button
+                      className="wishlist-remove-btn"
+                      onClick={() => handleRemove(item)}
+                    >
+                      <FiTrash2 />
+                      Remove
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>
