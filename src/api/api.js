@@ -37,20 +37,38 @@ export const api = {
 
 // ================= AUTH APIs =================
 
+// Register
 export const registerUser = (data) => {
   return axiosInstance.post(api.register, data);
 };
 
+// Login
 export const loginUser = (data) => {
   return axiosInstance.post(api.login, data);
 };
 
+// Verify OTP
 export const verifyOtp = (data) => {
   return axiosInstance.post(api.verifyOtp, data);
 };
 
+// Resend OTP
 export const resendOtp = (data) => {
   return axiosInstance.post(api.resendOtp, data);
+};
+
+// ================= PASSWORD RESET (ADDED) =================
+
+// Forgot Password (send email)
+export const forgotPassword = (email) => {
+  return axiosInstance.post(api.forgotPassword, { email });
+};
+
+// Reset Password
+export const resetPassword = (token, password) => {
+  return axiosInstance.post(`${api.resetPassword}/${token}`, {
+    password,
+  });
 };
 
 // ================= PRODUCTS =================
@@ -60,17 +78,17 @@ export const getProducts = () => {
   return axiosInstance.get(api.products);
 };
 
-// Get single product (for ProductDetail)
+// Get single product
 export const getProductById = (id) => {
   return axiosInstance.get(`${api.products}/${id}`);
 };
 
-// Get products by category (men / women / kids)
+// Get by category
 export const getProductsByCategory = (category) => {
   return axiosInstance.get(`${api.products}?category=${category}`);
 };
 
-// Search products
+// Search
 export const searchProducts = (keyword) => {
   return axiosInstance.get(`${api.products}?search=${keyword}`);
 };
@@ -87,7 +105,6 @@ export const createOrder = (data, token) => {
 
 // ================= CART =================
 
-// Get Cart
 export const getCart = (token) => {
   return axiosInstance.get(api.cart, {
     headers: {
@@ -96,7 +113,6 @@ export const getCart = (token) => {
   });
 };
 
-// Add to Cart
 export const addToCart = (productId, token) => {
   return axiosInstance.post(
     api.addToCart,
@@ -109,7 +125,6 @@ export const addToCart = (productId, token) => {
   );
 };
 
-// Remove from Cart
 export const removeFromCart = (productId, token) => {
   return axiosInstance.post(
     api.removeFromCart,
@@ -124,7 +139,6 @@ export const removeFromCart = (productId, token) => {
 
 // ================= WISHLIST =================
 
-// Get Wishlist
 export const getWishlist = (token) => {
   return axiosInstance.get(api.wishlist, {
     headers: {
@@ -133,7 +147,6 @@ export const getWishlist = (token) => {
   });
 };
 
-// Add to Wishlist
 export const addToWishlist = (productId, token) => {
   return axiosInstance.post(
     api.addToWishlist,
@@ -146,7 +159,6 @@ export const addToWishlist = (productId, token) => {
   );
 };
 
-// Remove from Wishlist
 export const removeFromWishlist = (productId, token) => {
   return axiosInstance.post(
     api.removeFromWishlist,

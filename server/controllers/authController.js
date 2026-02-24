@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
+const crypto = require("crypto");
 
 // ================= HELPER: GENERATE TOKEN =================
 const generateToken = (id) => {
@@ -37,8 +38,6 @@ exports.registerUser = async (req, res) => {
       otpExpire: Date.now() + 10 * 60 * 1000,
     });
 
-    console.log("Sending OTP to:", email);
-
     const html = `
       <h2>UrbanSole Email Verification</h2>
       <p>Your OTP is:</p>
@@ -47,8 +46,6 @@ exports.registerUser = async (req, res) => {
     `;
 
     await sendEmail(email, "UrbanSole OTP Verification", html);
-
-    console.log("OTP Email sent");
 
     res.status(201).json({
       message: "Registration successful. OTP sent to email.",
@@ -121,6 +118,7 @@ exports.getUserProfile = async (req, res) => {
   }
 };
 
+// ================= VERIFY OTP =================
 exports.verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -131,12 +129,10 @@ exports.verifyOtp = async (req, res) => {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // Check OTP
     if (user.otp !== otp || user.otpExpire < Date.now()) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
-    // Verify user
     user.isVerified = true;
     user.otp = null;
     user.otpExpire = null;
@@ -158,6 +154,7 @@ exports.verifyOtp = async (req, res) => {
   }
 };
 
+// ================= RESEND OTP =================
 exports.resendOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -168,15 +165,12 @@ exports.resendOtp = async (req, res) => {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // Generate new OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     user.otp = otp;
-    user.otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    user.otpExpire = Date.now() + 10 * 60 * 1000;
 
     await user.save();
-
-    console.log("Resending OTP to:", email);
 
     const html = `
       <h2>UrbanSole Email Verification</h2>
@@ -190,6 +184,71 @@ exports.resendOtp = async (req, res) => {
     res.json({ message: "OTP resent successfully" });
   } catch (error) {
     console.error("Resend OTP Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= FORGOT PASSWORD =================
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Create reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 min
+
+    await user.save();
+
+    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+
+    const html = `
+      <h2>UrbanSole Password Reset</h2>
+      <p>Click the link below to reset your password:</p>
+      <a href="${resetLink}">${resetLink}</a>
+      <p>This link will expire in 10 minutes.</p>
+    `;
+
+    await sendEmail(email, "Password Reset - UrbanSole", html);
+
+    res.json({ message: "Password reset link sent to email" });
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= RESET PASSWORD =================
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
+
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+  } catch (error) {
+    console.error("Reset Password Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

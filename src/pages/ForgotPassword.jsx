@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { forgotPassword } from "../api/api"; // use API function
 import "./Login.css";
 
 function ForgotPassword() {
@@ -21,27 +22,19 @@ function ForgotPassword() {
       setError("");
       setMessage("");
 
-      const res = await fetch(
-        "http://localhost:5000/api/auth/forgot-password",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-        },
+      // Call API from api.js
+      const res = await forgotPassword(email);
+
+      // Success message from backend or default
+      setMessage(
+        res.data?.message || "Password reset link has been sent to your email.",
       );
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Something went wrong");
-      }
-
-      setMessage("Password reset link has been sent to your email.");
       setEmail("");
     } catch (err) {
-      setError(err.message);
+      setError(
+        err.response?.data?.message || err.message || "Something went wrong",
+      );
     } finally {
       setLoading(false);
     }
