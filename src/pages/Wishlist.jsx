@@ -2,10 +2,7 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { WishlistContext } from "../context/WishlistContext";
 import { CartContext } from "../context/CartContext";
-import {
-  removeFromWishlist as removeWishlistAPI,
-  addToCart as addCartAPI,
-} from "../api/api";
+import { addToCart as addCartAPI } from "../api/api";
 import { FiTrash2, FiShoppingCart } from "react-icons/fi";
 import { toast } from "react-toastify";
 import "./Wishlist.css";
@@ -19,19 +16,20 @@ function Wishlist() {
   const token = localStorage.getItem("token");
 
   // Helper → support both id and _id
-  const getProductId = (item) => item._id || item.id;
+  const getProductId = (item) => item?._id || item?.id;
 
   // ================= Move to Cart =================
   const handleMoveToCart = async (item) => {
+    if (!item) return;
+
     const productId = getProductId(item);
 
-    // Update UI
+    // Update UI instantly
     addToCart(item);
     removeFromWishlist(productId);
 
     try {
       await addCartAPI(productId, token);
-      await removeWishlistAPI(productId, token);
       toast.success("Moved to cart");
     } catch (error) {
       console.error("Move to Cart Error:", error);
@@ -40,25 +38,20 @@ function Wishlist() {
   };
 
   // ================= Remove =================
-  const handleRemove = async (item) => {
+  const handleRemove = (item) => {
+    if (!item) return;
+
     const productId = getProductId(item);
-
-    // Update UI
     removeFromWishlist(productId);
-
-    try {
-      await removeWishlistAPI(productId, token);
-      toast.info("Removed from wishlist");
-    } catch (error) {
-      console.error("Remove Wishlist Error:", error);
-      toast.error("Failed to update server");
-    }
+    toast.info("Removed from wishlist");
   };
 
   // ================= Open Product =================
   const openProduct = (item) => {
     const productId = getProductId(item);
-    navigate(`/product/${productId}`);
+    if (productId) {
+      navigate(`/product/${productId}`);
+    }
   };
 
   return (
@@ -66,7 +59,7 @@ function Wishlist() {
       <h2 className="wishlist-title">My Wishlist</h2>
       <p className="wishlist-subtitle">Your favorite picks saved for later</p>
 
-      {wishlist.length === 0 ? (
+      {!wishlist || wishlist.length === 0 ? (
         <div className="wishlist-empty">
           <p>Your wishlist is empty.</p>
         </div>
@@ -74,12 +67,19 @@ function Wishlist() {
         <div className="wishlist-grid">
           {wishlist.map((item) => {
             const productId = getProductId(item);
+            if (!productId) return null;
 
             return (
               <div className="wishlist-card" key={productId}>
                 {/* IMAGE */}
                 <div className="wishlist-img" onClick={() => openProduct(item)}>
-                  <img src={item.image} alt={item.name} />
+                  <img
+                    src={item.image || "/placeholder.png"}
+                    alt={item.name || "Product"}
+                    onError={(e) => {
+                      e.target.src = "/placeholder.png";
+                    }}
+                  />
                 </div>
 
                 {/* INFO */}
@@ -88,10 +88,10 @@ function Wishlist() {
                     className="wishlist-name"
                     onClick={() => openProduct(item)}
                   >
-                    {item.name}
+                    {item.name || "Product"}
                   </h4>
 
-                  <p className="wishlist-price">₹{item.price}</p>
+                  <p className="wishlist-price">₹{item.price || 0}</p>
 
                   <div className="wishlist-actions">
                     <button

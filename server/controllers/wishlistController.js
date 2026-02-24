@@ -26,13 +26,13 @@ exports.getWishlist = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const wishlist = await getPopulatedWishlist(userId);
+    let wishlist = await getPopulatedWishlist(userId);
 
     if (!wishlist) {
-      return res.json({ user: userId, products: [] });
+      wishlist = await getOrCreateWishlist(userId);
     }
 
-    res.json(wishlist);
+    res.json({ products: wishlist.products });
   } catch (error) {
     console.error("Get Wishlist Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -49,18 +49,19 @@ exports.addToWishlist = async (req, res) => {
       return res.status(400).json({ message: "Product ID is required" });
     }
 
-    const wishlist = await getOrCreateWishlist(userId);
+    // Create wishlist if not exists
+    await getOrCreateWishlist(userId);
 
-    // Check duplicate
-    const exists = wishlist.products.find((id) => id.toString() === productId);
-
-    if (!exists) {
-      wishlist.products.push(productId);
-      await wishlist.save();
-    }
+    // MongoDB safe add (no duplicate)
+    await Wishlist.findOneAndUpdate(
+      { user: userId },
+      { $addToSet: { products: productId } }, // prevents duplicates
+      { new: true },
+    );
 
     const updatedWishlist = await getPopulatedWishlist(userId);
-    res.json(updatedWishlist);
+
+    res.json({ products: updatedWishlist.products });
   } catch (error) {
     console.error("Add Wishlist Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -77,16 +78,15 @@ exports.removeFromWishlist = async (req, res) => {
       return res.status(400).json({ message: "Product ID is required" });
     }
 
-    const wishlist = await getOrCreateWishlist(userId);
-
-    wishlist.products = wishlist.products.filter(
-      (id) => id.toString() !== productId,
+    await Wishlist.findOneAndUpdate(
+      { user: userId },
+      { $pull: { products: productId } },
+      { new: true },
     );
 
-    await wishlist.save();
-
     const updatedWishlist = await getPopulatedWishlist(userId);
-    res.json(updatedWishlist);
+
+    res.json({ products: updatedWishlist.products });
   } catch (error) {
     console.error("Remove Wishlist Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -98,12 +98,13 @@ exports.clearWishlist = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const wishlist = await getOrCreateWishlist(userId);
-    wishlist.products = [];
+    await Wishlist.findOneAndUpdate(
+      { user: userId },
+      { $set: { products: [] } },
+      { new: true },
+    );
 
-    await wishlist.save();
-
-    res.json({ message: "Wishlist cleared" });
+    res.json({ products: [] });
   } catch (error) {
     console.error("Clear Wishlist Error:", error);
     res.status(500).json({ message: "Server error" });
