@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const sendEmail = require("../utils/sendEmail");
 
 // ================= HELPER: GENERATE TOKEN =================
 const generateToken = (id) => {
@@ -13,7 +14,6 @@ exports.registerUser = async (req, res) => {
   try {
     let { username, email, password } = req.body;
 
-    // Basic validation
     if (!username || !email || !password) {
       return res.status(400).json({
         message: "Username, email and password are required",
@@ -22,29 +22,37 @@ exports.registerUser = async (req, res) => {
 
     email = email.trim().toLowerCase();
 
-    // Check if user already exists
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Create user
-    // Password will be hashed automatically by User model
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
     const user = await User.create({
       username,
       email,
       password,
+      otp,
+      otpExpire: Date.now() + 10 * 60 * 1000,
     });
 
+    console.log("Sending OTP to:", email);
+
+    const html = `
+      <h2>UrbanSole Email Verification</h2>
+      <p>Your OTP is:</p>
+      <h1>${otp}</h1>
+      <p>This OTP will expire in 10 minutes.</p>
+    `;
+
+    await sendEmail(email, "UrbanSole OTP Verification", html);
+
+    console.log("OTP Email sent");
+
     res.status(201).json({
-      message: "Registration successful",
-      token: generateToken(user._id),
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      },
+      message: "Registration successful. OTP sent to email.",
+      userId: user._id,
     });
   } catch (error) {
     console.error("Register Error:", error);
@@ -65,7 +73,7 @@ exports.loginUser = async (req, res) => {
 
     email = email.trim().toLowerCase();
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(400).json({
@@ -73,7 +81,6 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    // Compare password (method from User model)
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
@@ -98,10 +105,10 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// ================= GET USER PROFILE =================
+// ================= GET PROFILE =================
 exports.getUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user._id).select("-password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -110,6 +117,79 @@ exports.getUserProfile = async (req, res) => {
     res.json(user);
   } catch (error) {
     console.error("Profile Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    // Check OTP
+    if (user.otp !== otp || user.otpExpire < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Verify user
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpire = null;
+
+    await user.save();
+
+    res.json({
+      message: "Email verified successfully",
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error("Verify OTP Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    // Generate new OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.otp = otp;
+    user.otpExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    await user.save();
+
+    console.log("Resending OTP to:", email);
+
+    const html = `
+      <h2>UrbanSole Email Verification</h2>
+      <p>Your new OTP is:</p>
+      <h1>${otp}</h1>
+      <p>This OTP will expire in 10 minutes.</p>
+    `;
+
+    await sendEmail(email, "UrbanSole OTP Resend", html);
+
+    res.json({ message: "OTP resent successfully" });
+  } catch (error) {
+    console.error("Resend OTP Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

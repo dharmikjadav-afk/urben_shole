@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 6,
-      select: true, // needed for login comparison
+      select: true, // Needed for login comparison
     },
 
     role: {
@@ -33,16 +33,23 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
-    // Email Verification
+    // ================= EMAIL VERIFICATION =================
     isVerified: {
       type: Boolean,
       default: false,
     },
 
-    otp: String,
-    otpExpire: Date,
+    otp: {
+      type: String,
+      default: null,
+    },
 
-    // Forgot Password
+    otpExpire: {
+      type: Date,
+      default: null,
+    },
+
+    // ================= FORGOT PASSWORD =================
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },
@@ -52,8 +59,9 @@ const userSchema = new mongoose.Schema(
 );
 
 // ================= HASH PASSWORD BEFORE SAVE =================
+// Use async middleware WITHOUT next (recommended)
 userSchema.pre("save", async function () {
-  // Only hash if password is changed
+  // Only hash if password is modified
   if (!this.isModified("password")) return;
 
   const salt = await bcrypt.genSalt(10);

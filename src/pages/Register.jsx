@@ -1,8 +1,7 @@
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import axios from "axios";
-import { api } from "../api/api";
+import { registerUser } from "../api/api";
 import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import "./Login.css";
@@ -34,10 +33,9 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Normalize email (important for OTP matching)
     const email = form.email.trim().toLowerCase();
 
-    // Password strength
+    // Password strength validation
     if (!isStrongPassword(form.password)) {
       toast.error(
         "Password must include uppercase, lowercase, number & special character",
@@ -45,7 +43,7 @@ function Register() {
       return;
     }
 
-    // Match password
+    // Password match validation
     if (form.password !== form.confirmPassword) {
       toast.error("Passwords do not match");
       return;
@@ -54,7 +52,7 @@ function Register() {
     try {
       setLoading(true);
 
-      const response = await axios.post(api.register, {
+      const response = await registerUser({
         username: form.name.trim(),
         email: email,
         password: form.password,
@@ -64,17 +62,20 @@ function Register() {
 
       toast.success(data.message || "OTP sent to your email");
 
-      // Redirect to OTP page
       navigate("/verify-otp", {
         state: { email },
       });
     } catch (error) {
-      const message = error.response?.data?.message || "Registration failed";
+      console.log("Register Error:", error.response?.data);
+
+      const message =
+        error.response?.data?.message || error.message || "Registration failed";
+
       toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }; // ← THIS WAS MISSING IN YOUR CODE
 
   return (
     <section className="auth-wrapper">
@@ -96,6 +97,7 @@ function Register() {
               placeholder=" "
               value={form.name}
               onChange={handleChange}
+              autoComplete="name"
             />
             <label>Full Name</label>
           </div>
@@ -109,6 +111,7 @@ function Register() {
               placeholder=" "
               value={form.email}
               onChange={handleChange}
+              autoComplete="email"
             />
             <label>Email address</label>
           </div>
@@ -122,6 +125,7 @@ function Register() {
               placeholder=" "
               value={form.password}
               onChange={handleChange}
+              autoComplete="new-password"
             />
             <label>Password</label>
 
@@ -148,6 +152,7 @@ function Register() {
               placeholder=" "
               value={form.confirmPassword}
               onChange={handleChange}
+              autoComplete="new-password"
             />
             <label>Confirm Password</label>
 
