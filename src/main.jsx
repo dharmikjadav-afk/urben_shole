@@ -8,19 +8,22 @@ import CartProvider from "./context/CartContext";
 import "./index.css";
 import "aos/dist/aos.css";
 
-// 🔹 Toast imports
+// Toast imports
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
+// Create root (recommended for React 18)
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(
+  <React.Fragment>
     <ThemeProvider>
       <AuthProvider>
         <WishlistProvider>
           <CartProvider>
             <App />
 
-            {/* 🔹 Global Toast Container */}
+            {/* Global Toast Container */}
             <ToastContainer
               position="top-right"
               autoClose={2500}
@@ -40,5 +43,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </WishlistProvider>
       </AuthProvider>
     </ThemeProvider>
-  </React.StrictMode>,
+  </React.Fragment>,
 );

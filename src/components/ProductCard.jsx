@@ -5,7 +5,6 @@ import { WishlistContext } from "../context/WishlistContext";
 import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
 import { addToWishlist as addWishlistAPI } from "../api/api";
-import { addToCart as addCartAPI } from "../api/api";
 import { toast } from "react-toastify";
 import "./ProductCard.css";
 
@@ -36,15 +35,12 @@ function ProductCard({ product }) {
 
     try {
       if (inWishlist) {
-        // Remove locally
         removeFromWishlist(productId);
         toast.info("Removed from wishlist");
       } else {
-        // Add locally (UI update first)
         addToWishlist(product);
         toast.success("Added to wishlist");
 
-        // Save to backend
         const token = localStorage.getItem("token");
         await addWishlistAPI(productId, token);
       }
@@ -54,23 +50,20 @@ function ProductCard({ product }) {
     }
   };
 
-  // ================= Cart =================
+  // ================= Cart (FIXED) =================
   const handleAddToCart = async () => {
     if (!user) {
       navigate("/login");
       return;
     }
 
-    // Update UI first
-    addToCart(product);
-
     try {
-      const token = localStorage.getItem("token");
-      await addCartAPI(productId, token);
+      // Only call context (Context handles API)
+      await addToCart(product);
       toast.success("Added to cart");
     } catch (error) {
-      console.error("Cart API Error:", error);
-      toast.error("Failed to save cart");
+      console.error("Cart Error:", error);
+      toast.error("Failed to add cart");
     }
   };
 

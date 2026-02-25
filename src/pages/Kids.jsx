@@ -11,15 +11,15 @@ function Kids() {
   const [sort, setSort] = useState("");
   const [priceRange, setPriceRange] = useState(2500);
 
-  // Fetch products from backend
+  // ================= Fetch Products =================
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const res = await getProducts();
 
-        // Filter only kids products
+        // Safe filter for Kids category
         const kidsOnly = res.data.filter(
-          (p) => p.category.toLowerCase() === "kids",
+          (p) => p?.category && p.category.toLowerCase() === "kids",
         );
 
         setKidsProducts(kidsOnly);
@@ -33,8 +33,9 @@ function Kids() {
     fetchProducts();
   }, []);
 
+  // ================= Filters =================
   const filteredProducts = kidsProducts
-    .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    .filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()))
     .filter((p) => p.price <= priceRange)
     .sort((a, b) => {
       if (sort === "low") return a.price - b.price;
@@ -63,7 +64,7 @@ function Kids() {
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        <select onChange={(e) => setSort(e.target.value)}>
+        <select value={sort} onChange={(e) => setSort(e.target.value)}>
           <option value="">Sort</option>
           <option value="low">Price: Low → High</option>
           <option value="high">Price: High → Low</option>

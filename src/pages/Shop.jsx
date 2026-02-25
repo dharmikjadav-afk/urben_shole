@@ -12,12 +12,12 @@ function Shop() {
   const [sort, setSort] = useState("default");
   const [search, setSearch] = useState("");
 
-  // Fetch products from backend
+  // ================= Fetch Products =================
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const res = await getProducts();
-        setProducts(res.data);
+        setProducts(res.data || []);
       } catch (error) {
         console.error("Failed to load products", error);
       } finally {
@@ -28,15 +28,18 @@ function Shop() {
     fetchProducts();
   }, []);
 
+  // ================= Filter & Sort =================
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    // Category filter
+    // Category
     if (category !== "all") {
-      result = result.filter((p) => p.category.toLowerCase() === category);
+      result = result.filter(
+        (p) => p?.category && p.category.toLowerCase() === category,
+      );
     }
 
-    // Price filter
+    // Price
     if (price === "low") {
       result = result.filter((p) => p.price < 2000);
     }
@@ -50,7 +53,7 @@ function Shop() {
     // Search
     if (search.trim()) {
       result = result.filter((p) =>
-        p.name.toLowerCase().includes(search.toLowerCase()),
+        p.name?.toLowerCase().includes(search.toLowerCase()),
       );
     }
 
@@ -67,6 +70,7 @@ function Shop() {
 
   return (
     <section className="shop-page">
+      {/* Header */}
       <div className="shop-header">
         <div>
           <h1>Shop All Shoes</h1>
@@ -90,7 +94,7 @@ function Shop() {
       </div>
 
       <div className="shop-layout">
-        {/* Sidebar Filters */}
+        {/* Sidebar */}
         <aside className="shop-filters">
           <h3>Filters</h3>
 

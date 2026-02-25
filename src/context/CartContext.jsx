@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { AuthContext } from "./AuthContext";
+import axios from "axios";
 
 export const CartContext = createContext();
 
@@ -7,28 +8,45 @@ function CartProvider({ children }) {
   const { user } = useContext(AuthContext);
   const [cart, setCart] = useState([]);
 
-  // Helper → support both id and _id
-  const getProductId = (product) => product._id || product.id;
+  const API_URL = "http://localhost:5000/api/cart";
 
-  const clearCart = () => {
-    if (!user) return;
+  // Prevent multiple API calls
+  const loadingRef = useRef(false);
 
-    setCart([]);
-    localStorage.removeItem(`cart_${user.email}`);
+  // Always return string ObjectId
+  const getProductId = (product) => {
+    const id = product?._id || product?.id;
+    return id?.toString();
   };
 
-  // Load cart when user changes
+  // ================= Fetch Cart =================
+  const fetchCart = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await axios.get(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setCart(res.data.items || []);
+    } catch (error) {
+      console.log("Fetch cart error:", error);
+    }
+  };
+
+  // Load cart when user logs in
   useEffect(() => {
-    if (user?.email) {
-      const stored =
-        JSON.parse(localStorage.getItem(`cart_${user.email}`)) || [];
-      setCart(stored);
+    if (user) {
+      fetchCart();
     } else {
       setCart([]);
     }
   }, [user]);
 
-  // Save cart
+  // Backup cart locally
   useEffect(() => {
     if (user?.email) {
       localStorage.setItem(`cart_${user.email}`, JSON.stringify(cart));
@@ -36,49 +54,133 @@ function CartProvider({ children }) {
   }, [cart, user]);
 
   // ================= Add to Cart =================
-  const addToCart = (product) => {
-    if (!user) return;
+  const addToCart = async (product) => {
+    if (!user || !product) return;
 
-    const productId = getProductId(product);
+    if (loadingRef.current) return;
+    loadingRef.current = true;
 
-    const exists = cart.find((item) => getProductId(item) === productId);
+    try {
+      const token = localStorage.getItem("token");
 
-    if (exists) {
-      setCart((prev) =>
-        prev.map((item) =>
-          getProductId(item) === productId
-            ? { ...item, qty: item.qty + 1 }
-            : item,
-        ),
+      const productId = getProductId(product);
+      const size = Number(product.size) || 8;
+
+      if (!productId) return;
+
+      const res = await axios.post(
+        `${API_URL}/add`,
+        {
+          productId,
+          size,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
-    } else {
-      setCart((prev) => [...prev, { ...product, qty: 1 }]);
+
+      setCart(res.data.items || []);
+    } catch (error) {
+      console.log("Add to cart error:", error);
+    } finally {
+      loadingRef.current = false;
     }
   };
 
-  // ================= Decrease Qty =================
-  const decreaseQty = (id) => {
-    if (!user) return;
-
-    setCart((prev) =>
-      prev
-        .map((item) =>
-          getProductId(item) === id ? { ...item, qty: item.qty - 1 } : item,
-        )
-        .filter((item) => item.qty > 0),
-    );
+  // ================= Increase Qty =================
+  // (Same as addToCart)
+  const increaseQty = (product) => {
+    addToCart(product);
   };
 
-  // ================= Remove =================
-  const removeFromCart = (id) => {
+  // ================= Decrease Qty =================
+  const decreaseQty = async (productId, size = 8) => {
     if (!user) return;
 
-    setCart((prev) => prev.filter((item) => getProductId(item) !== id));
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.post(
+        `${API_URL}/decrease`,
+        {
+          productId: productId.toString(),
+          size: Number(size),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setCart(res.data.items || []);
+    } catch (error) {
+      console.log("Decrease qty error:", error);
+    } finally {
+      loadingRef.current = false;
+    }
+  };
+
+  // ================= Remove Item =================
+  const removeFromCart = async (productId, size = 8) => {
+    if (!user) return;
+
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.post(
+        `${API_URL}/remove`,
+        {
+          productId: productId.toString(),
+          size: Number(size),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setCart(res.data.items || []);
+    } catch (error) {
+      console.log("Remove error:", error);
+    } finally {
+      loadingRef.current = false;
+    }
+  };
+
+  // ================= Clear Cart =================
+  const clearCart = async () => {
+    if (!user) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.delete(`${API_URL}/clear`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setCart([]);
+      localStorage.removeItem(`cart_${user.email}`);
+    } catch (error) {
+      console.log("Clear cart error:", error);
+    }
   };
 
   // ================= Total =================
   const cartTotal = cart.reduce(
-    (total, item) => total + item.price * item.qty,
+    (total, item) =>
+      total + (Number(item.price) || 0) * (Number(item.qty) || 1),
     0,
   );
 
@@ -86,7 +188,9 @@ function CartProvider({ children }) {
     <CartContext.Provider
       value={{
         cart,
+        fetchCart,
         addToCart,
+        increaseQty,
         decreaseQty,
         removeFromCart,
         clearCart,

@@ -10,35 +10,36 @@ function WishlistProvider({ children }) {
 
   const API_URL = "http://localhost:5000/api/wishlist";
 
-  // Helper: get product unique id
+  // Helper: support both id and _id
   const getProductId = (product) => (product?._id || product?.id)?.toString();
 
   // ==============================
-  // Load wishlist from backend
+  // Fetch Wishlist (Reusable)
   // ==============================
-  useEffect(() => {
-    const fetchWishlist = async () => {
-      try {
-        const token = localStorage.getItem("token");
+  const fetchWishlist = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-        if (!token || !user) {
-          setWishlist([]);
-          return;
-        }
-
-        const res = await axios.get(API_URL, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        setWishlist(res.data.products || []);
-      } catch (error) {
-        console.log("Error fetching wishlist:", error);
+      if (!token || !user) {
         setWishlist([]);
+        return;
       }
-    };
 
+      const res = await axios.get(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setWishlist(res.data.products || []);
+    } catch (error) {
+      console.log("Error fetching wishlist:", error);
+      setWishlist([]);
+    }
+  };
+
+  // Load when user changes
+  useEffect(() => {
     fetchWishlist();
   }, [user]);
 
@@ -47,15 +48,16 @@ function WishlistProvider({ children }) {
   // ==============================
   const addToWishlist = async (product) => {
     const productId = getProductId(product);
+    if (!productId) return;
 
-    // Prevent duplicate in UI (important)
+    // Prevent duplicate in UI
     const exists = wishlist.some((item) => getProductId(item) === productId);
     if (exists) return;
 
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.post(
+      await axios.post(
         `${API_URL}/add`,
         { productId },
         {
@@ -65,7 +67,7 @@ function WishlistProvider({ children }) {
         },
       );
 
-      setWishlist(res.data.products || []);
+      fetchWishlist(); // Refresh from backend
     } catch (error) {
       console.log("Error adding to wishlist:", error);
     }
@@ -75,10 +77,12 @@ function WishlistProvider({ children }) {
   // Remove from wishlist
   // ==============================
   const removeFromWishlist = async (productId) => {
+    if (!productId) return;
+
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.post(
+      await axios.post(
         `${API_URL}/remove`,
         { productId: productId.toString() },
         {
@@ -88,7 +92,7 @@ function WishlistProvider({ children }) {
         },
       );
 
-      setWishlist(res.data.products || []);
+      fetchWishlist(); // Refresh
     } catch (error) {
       console.log("Error removing from wishlist:", error);
     }
@@ -104,7 +108,13 @@ function WishlistProvider({ children }) {
 
   return (
     <WishlistContext.Provider
-      value={{ wishlist, addToWishlist, removeFromWishlist, isInWishlist }}
+      value={{
+        wishlist,
+        fetchWishlist, // useful if needed elsewhere
+        addToWishlist,
+        removeFromWishlist,
+        isInWishlist,
+      }}
     >
       {children}
     </WishlistContext.Provider>

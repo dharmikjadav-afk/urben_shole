@@ -12,15 +12,15 @@ function Women() {
   const [priceRange, setPriceRange] = useState(4000);
   const [priceBucket, setPriceBucket] = useState("");
 
-  // Fetch products from backend
+  // ================= Fetch Products =================
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const res = await getProducts();
 
-        // Filter only women products
+        // Safe filter for Women category
         const womenOnly = res.data.filter(
-          (p) => p.category.toLowerCase() === "women",
+          (p) => p?.category && p.category.toLowerCase() === "women",
         );
 
         setWomenProducts(womenOnly);
@@ -34,8 +34,9 @@ function Women() {
     fetchProducts();
   }, []);
 
+  // ================= Filters =================
   const filteredProducts = womenProducts
-    .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    .filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()))
     .filter((p) => p.price <= priceRange)
     .filter((p) => {
       if (priceBucket === "low") return p.price < 2000;
@@ -70,14 +71,17 @@ function Women() {
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        <select onChange={(e) => setSort(e.target.value)}>
+        <select value={sort} onChange={(e) => setSort(e.target.value)}>
           <option value="">Sort</option>
           <option value="low">Price: Low → High</option>
           <option value="high">Price: High → Low</option>
           <option value="name">Name: A → Z</option>
         </select>
 
-        <select onChange={(e) => setPriceBucket(e.target.value)}>
+        <select
+          value={priceBucket}
+          onChange={(e) => setPriceBucket(e.target.value)}
+        >
           <option value="">Price Range</option>
           <option value="low">Below ₹2000</option>
           <option value="mid">₹2000 – ₹3000</option>

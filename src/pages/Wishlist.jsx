@@ -2,7 +2,6 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { WishlistContext } from "../context/WishlistContext";
 import { CartContext } from "../context/CartContext";
-import { addToCart as addCartAPI } from "../api/api";
 import { FiTrash2, FiShoppingCart } from "react-icons/fi";
 import { toast } from "react-toastify";
 import "./Wishlist.css";
@@ -13,8 +12,6 @@ function Wishlist() {
   const { wishlist, removeFromWishlist } = useContext(WishlistContext);
   const { addToCart } = useContext(CartContext);
 
-  const token = localStorage.getItem("token");
-
   // Helper → support both id and _id
   const getProductId = (item) => item?._id || item?.id;
 
@@ -24,16 +21,17 @@ function Wishlist() {
 
     const productId = getProductId(item);
 
-    // Update UI instantly
-    addToCart(item);
-    removeFromWishlist(productId);
-
     try {
-      await addCartAPI(productId, token);
+      // ✅ Only this (CartContext handles API)
+      await addToCart(item);
+
+      // Remove from wishlist after adding
+      removeFromWishlist(productId);
+
       toast.success("Moved to cart");
     } catch (error) {
       console.error("Move to Cart Error:", error);
-      toast.error("Failed to update server");
+      toast.error("Failed to move to cart");
     }
   };
 

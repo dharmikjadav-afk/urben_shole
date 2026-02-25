@@ -55,7 +55,7 @@ function Checkout() {
 
     const order = {
       id: "ORD" + Date.now(),
-      items: cart, 
+      items: cart,
       address,
       paymentMethod: payment,
       subtotal: cartTotal,
@@ -81,7 +81,6 @@ function Checkout() {
       </p>
 
       <div className="checkout-layout">
-
         <div className="checkout-form">
           <h3>Delivery Address</h3>
 
@@ -119,9 +118,7 @@ function Checkout() {
                 onChange={handleChange}
                 className={errors.city ? "error" : ""}
               />
-              {errors.city && (
-                <span className="error-text">{errors.city}</span>
-              )}
+              {errors.city && <span className="error-text">{errors.city}</span>}
             </div>
 
             <div>
@@ -165,27 +162,23 @@ function Checkout() {
               className={`payment-card ${payment === "upi" ? "active" : ""}`}
               onClick={() => setPayment("upi")}
             >
-              UPI (Mock)
+              UPI
             </div>
 
             <div
               className={`payment-card ${payment === "card" ? "active" : ""}`}
               onClick={() => setPayment("card")}
             >
-              Card (Mock)
+              Card
             </div>
           </div>
         </div>
-
 
         <div className="checkout-summary">
           <h3>Order Summary</h3>
 
           {cart.map((item) => (
-            <div
-              className="summary-item"
-              key={`${item.id}-${item.size}`} 
-            >
+            <div className="summary-item" key={`${item.id}-${item.size}`}>
               <div>
                 <strong>{item.name}</strong>
                 <p className="summary-size">
@@ -224,9 +217,7 @@ function Checkout() {
             Place Order
           </button>
 
-          <p className="secure-note">
-            100% secure & encrypted checkout
-          </p>
+          <p className="secure-note">100% secure & encrypted checkout</p>
         </div>
       </div>
     </section>

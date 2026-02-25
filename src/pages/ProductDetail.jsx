@@ -11,10 +11,7 @@ import {
   FiRefreshCw,
   FiShield,
 } from "react-icons/fi";
-import {
-  addToCart as addCartAPI,
-  addToWishlist as addWishlistAPI,
-} from "../api/api";
+import { addToWishlist as addWishlistAPI } from "../api/api";
 import { toast } from "react-toastify";
 import "./ProductDetail.css";
 
@@ -24,7 +21,7 @@ function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { cart, addToCart } = useContext(CartContext);
+  const { addToCart } = useContext(CartContext);
   const { user } = useContext(AuthContext);
   const { addToWishlist, removeFromWishlist, isInWishlist } =
     useContext(WishlistContext);
@@ -78,22 +75,20 @@ function ProductDetail() {
 
     const item = { ...product, size };
 
-    for (let i = 0; i < qty; i++) {
-      addToCart(item);
-    }
-
     try {
-      const token = localStorage.getItem("token");
-      await addCartAPI(productId, token);
+      for (let i = 0; i < qty; i++) {
+        await addToCart(item);
+      }
+
       toast.success("Added to cart");
     } catch (error) {
-      console.error("Cart API Error:", error);
-      toast.error("Failed to save cart");
+      console.error("Cart Error:", error);
+      toast.error("Failed to add to cart");
     }
   };
 
-  // ================= Buy Now =================
-  const handleBuyNow = async () => {
+  // ================= Buy Now (FIXED – No cart update) =================
+  const handleBuyNow = () => {
     if (!user) {
       navigate("/login");
       return;
@@ -104,17 +99,22 @@ function ProductDetail() {
       return;
     }
 
-    const item = { ...product, size };
-    addToCart(item);
+    const buyNowItem = {
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      qty: qty,
+      size: size,
+    };
 
-    try {
-      const token = localStorage.getItem("token");
-      await addCartAPI(productId, token);
-    } catch (error) {
-      console.error("Cart API Error:", error);
-    }
-
-    navigate("/checkout");
+    // Send directly to checkout (do NOT add to cart)
+    navigate("/checkout", {
+      state: {
+        buyNow: true,
+        items: [buyNowItem],
+      },
+    });
   };
 
   // ================= Wishlist =================

@@ -7,6 +7,7 @@ function OrderDetails() {
   const navigate = useNavigate();
   const [order, setOrder] = useState(state);
 
+  // ================= If Order Not Found =================
   if (!order) {
     return (
       <section className="order-details-page">
@@ -16,6 +17,7 @@ function OrderDetails() {
     );
   }
 
+  // ================= Cancel Logic =================
   const cancellableStages = ["Order Placed", "Packed"];
   const canCancel = cancellableStages.includes(order.status);
 
@@ -34,15 +36,14 @@ function OrderDetails() {
     const orders = JSON.parse(localStorage.getItem("orders")) || [];
 
     const updatedOrders = orders.map((o) =>
-      o.id === order.id ? updatedOrder : o
+      o.id === order.id ? updatedOrder : o,
     );
 
     localStorage.setItem("orders", JSON.stringify(updatedOrders));
-
     setOrder(updatedOrder);
   };
 
-
+  // ================= Refund Auto Complete =================
   useEffect(() => {
     if (
       order.status === "Cancelled" &&
@@ -57,22 +58,25 @@ function OrderDetails() {
         const orders = JSON.parse(localStorage.getItem("orders")) || [];
 
         const updatedOrders = orders.map((o) =>
-          o.id === order.id ? completedOrder : o
+          o.id === order.id ? completedOrder : o,
         );
 
         localStorage.setItem("orders", JSON.stringify(updatedOrders));
-
         setOrder(completedOrder);
-      }, 3000); 
+      }, 3000);
 
       return () => clearTimeout(timer);
     }
   }, [order]);
 
+  // ================= Safe Items =================
+  const items = order.items || [];
+
   return (
     <section className="order-details-page">
       <h2>Order Details</h2>
 
+      {/* Order Info */}
       <div className="order-card">
         <p>
           <strong>Order ID:</strong> {order.id}
@@ -106,23 +110,32 @@ function OrderDetails() {
         )}
       </div>
 
+      {/* Items */}
       <div className="order-items">
         <h3>Items</h3>
 
-        {order.items.map((item) => (
-          <div key={`${item.id}-${item.size}`} className="order-item">
-            <div>
-              <h4>{item.name}</h4>
-              <p className="order-size">
-                Size: UK {item.size} × {item.qty}
-              </p>
-            </div>
+        {items.length === 0 ? (
+          <p>No items found</p>
+        ) : (
+          items.map((item) => (
+            <div
+              key={`${item._id || item.id}-${item.size}`}
+              className="order-item"
+            >
+              <div>
+                <h4>{item.name}</h4>
+                <p className="order-size">
+                  Size: UK {item.size} × {item.qty}
+                </p>
+              </div>
 
-            <span>₹{item.price * item.qty}</span>
-          </div>
-        ))}
+              <span>₹{item.price * item.qty}</span>
+            </div>
+          ))
+        )}
       </div>
 
+      {/* Summary */}
       <div className="order-summary">
         <p>Subtotal: ₹{order.subtotal}</p>
         <p>GST: ₹{order.gst}</p>
@@ -130,6 +143,7 @@ function OrderDetails() {
         <h3>Total: ₹{order.total}</h3>
       </div>
 
+      {/* Cancel Button */}
       {canCancel && (
         <button className="cancel-order-btn" onClick={handleCancelOrder}>
           Cancel Order

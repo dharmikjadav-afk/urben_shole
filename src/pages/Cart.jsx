@@ -9,22 +9,25 @@ const SIZES = [6, 7, 8, 9, 10];
 function Cart() {
   const navigate = useNavigate();
 
-  const {
-    cart,
-    addToCart,
-    decreaseQty,
-    removeFromCart,
-    updateSize,
-    cartTotal,
-  } = useContext(CartContext);
+  const { cart, addToCart, decreaseQty, removeFromCart, cartTotal } =
+    useContext(CartContext);
+
+  // Helper → always use MongoDB _id
+  const getId = (item) => item?._id || item?.id;
+
+  // Safe helpers
+  const getPrice = (price) => Number(price) || 0;
+  const getQty = (qty) => Number(qty) || 1;
 
   const GST_RATE = 0.18;
   const PLATFORM_FEE = 20;
 
-  const gstAmount = Math.round(cartTotal * GST_RATE);
-  const finalTotal = cartTotal + gstAmount + PLATFORM_FEE;
+  const safeTotal = Number(cartTotal) || 0;
+  const gstAmount = Math.round(safeTotal * GST_RATE);
+  const finalTotal = safeTotal + gstAmount + PLATFORM_FEE;
 
-  if (cart.length === 0) {
+  // ================= Empty Cart =================
+  if (!cart || cart.length === 0) {
     return (
       <section className="cart-page">
         <div className="cart-empty">
@@ -40,61 +43,73 @@ function Cart() {
       <h2 className="cart-title">Shopping Cart</h2>
 
       <div className="cart-layout">
+        {/* ================= Cart Items ================= */}
         <div className="cart-items">
-          {cart.map((item) => (
-            <div className="cart-item" key={`${item.id}-${item.size}`}>
-              <img src={item.image} alt={item.name} />
+          {cart.map((item, index) => {
+            const id = getId(item);
+            const price = getPrice(item.price);
+            const qty = getQty(item.qty);
+            const image = item.image || "/placeholder.png";
+            const name = item.name || "Product";
+            const size = item.size || 8;
 
-              <div className="cart-details">
-                <h4>{item.name}</h4>
+            return (
+              // Unique key (product + size)
+              <div className="cart-item" key={`${id}-${size}`}>
+                <img src={image} alt={name} />
 
-                {/* SIZE EDIT */}
-                <select
-                  className="size-select"
-                  value={item.size}
-                  onChange={(e) =>
-                    updateSize(item.id, item.size, Number(e.target.value))
-                  }
-                >
-                  {SIZES.map((s) => (
-                    <option key={s} value={s}>
-                      UK {s}
-                    </option>
-                  ))}
-                </select>
+                <div className="cart-details">
+                  <h4>{name}</h4>
 
-                <p className="unit-price">₹{item.price}</p>
+                  <p className="size-label">Size: UK {size}</p>
+                  <p className="unit-price">₹{price}</p>
 
-                <div className="qty-control">
-                  <button onClick={() => decreaseQty(item.id)}>
-                    <FiMinus />
-                  </button>
-                  <span>{item.qty}</span>
-                  <button onClick={() => addToCart(item)}>
-                    <FiPlus />
+                  {/* Quantity Controls */}
+                  <div className="qty-control">
+                    {/* Decrease */}
+                    <button onClick={() => decreaseQty(id, size)}>
+                      <FiMinus />
+                    </button>
+
+                    <span>{qty}</span>
+
+                    {/* Increase */}
+                    <button
+                      onClick={() =>
+                        addToCart({
+                          _id: id,
+                          size: size,
+                        })
+                      }
+                    >
+                      <FiPlus />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="cart-right">
+                  <p className="item-total">₹{price * qty}</p>
+
+                  {/* Remove */}
+                  <button
+                    className="remove-btn"
+                    onClick={() => removeFromCart(id, size)}
+                  >
+                    <FiTrash2 />
                   </button>
                 </div>
               </div>
-
-              <div className="cart-right">
-                <p className="item-total">₹{item.price * item.qty}</p>
-                <button
-                  className="remove-btn"
-                  onClick={() => removeFromCart(item.id)}
-                >
-                  <FiTrash2 />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
+        {/* ================= Order Summary ================= */}
         <div className="order-summary">
           <h3>Order Summary</h3>
 
           <div className="summary-row">
             <span>Subtotal</span>
-            <span>₹{cartTotal}</span>
+            <span>₹{safeTotal}</span>
           </div>
 
           <div className="summary-row">
