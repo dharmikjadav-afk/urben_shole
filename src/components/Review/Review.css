@@ -1,0 +1,292 @@
+/* ===============================
+   Theme Colors (UrbanSole)
+================================ */
+:root {
+  --primary-bg: #0b1c3a;
+  --card-bg: #0f254f;
+  --gold: #d4a75f;
+  --gold-hover: #c39245;
+  --text-light: #ffffff;
+  --text-muted: #cbd5e1;
+  --border-light: rgba(255, 255, 255, 0.08);
+}
+
+/* ===============================
+   Review Section
+================================ */
+.review-section {
+  margin-top: 40px;
+}
+
+/* ===============================
+   Review Box (Write Review)
+================================ */
+.review-box {
+  background: linear-gradient(145deg, #0f254f, #0b1c3a);
+  border-radius: 14px;
+  padding: 24px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 30px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.review-box h3 {
+  color: var(--text-light);
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+/* ===============================
+   Star Rating
+================================ */
+.star-rating {
+  margin-bottom: 14px;
+}
+
+.star {
+  font-size: 26px;
+  cursor: pointer;
+  margin-right: 6px;
+  color: #4b5d7a;
+  transition: all 0.2s ease;
+}
+
+.star.active {
+  color: var(--gold);
+}
+
+.star:hover {
+  transform: scale(1.15);
+  color: var(--gold);
+}
+
+/* ===============================
+   Textarea
+================================ */
+.review-box textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-light);
+  background: #09152e;
+  color: var(--text-light);
+  font-size: 14px;
+  resize: none;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.review-box textarea::placeholder {
+  color: #8fa1c2;
+}
+
+.review-box textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(212, 167, 95, 0.4);
+}
+
+/* ===============================
+   Submit Button
+================================ */
+.review-box button {
+  background: var(--gold);
+  color: #000;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.review-box button:hover {
+  background: var(--gold-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(212, 167, 95, 0.3);
+}
+
+/* ===============================
+   Review List (Premium Card)
+================================ */
+.review-list {
+  background: linear-gradient(145deg, #0b1220, #0a1733);
+  border-radius: 16px;
+  padding: 28px;
+  margin-top: 30px;
+  border: 1px solid #1e2f5c;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+}
+
+.review-title {
+  color: #fff;
+  margin-bottom: 22px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ===============================
+   Summary Section
+================================ */
+.review-summary {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+/* Average Rating Box */
+.avg-rating-box {
+  text-align: center;
+  min-width: 130px;
+}
+
+.avg-rating-number {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.avg-rating-number span {
+  font-size: 28px;
+}
+
+.avg-rating-box p {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Rating Bars */
+.rating-bars {
+  flex: 1;
+  max-width: 500px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.bar {
+  flex: 1;
+  height: 10px;
+  background: #1e2f5c;
+  margin: 0 10px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), #f5c97a);
+  transition: width 0.4s ease;
+}
+
+.bar-count {
+  width: 25px;
+  text-align: right;
+}
+
+/* ===============================
+   Individual Review Card
+================================ */
+.review-card {
+  border-top: 1px solid #1e2f5c;
+  padding: 18px 0;
+  transition: all 0.25s ease;
+}
+
+.review-card:hover {
+  background: rgba(255, 255, 255, 0.02);
+  padding-left: 6px;
+  border-radius: 8px;
+}
+
+.review-user {
+  font-weight: 600;
+  color: var(--text-light);
+  font-size: 15px;
+}
+
+/* Verified Badge */
+.verified-badge {
+  background: rgba(212, 167, 95, 0.15);
+  color: var(--gold);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+}
+
+/* Stars */
+.review-stars {
+  color: var(--gold);
+  font-size: 18px;
+  margin: 6px 0;
+}
+
+/* Comment */
+.review-comment {
+  color: var(--text-muted);
+  margin: 6px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Date */
+.review-date {
+  font-size: 12px;
+  color: #7c8db5;
+}
+
+/* ===============================
+   Review Actions (Edit/Delete)
+================================ */
+.review-actions {
+  margin-top: 12px;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  margin-right: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.edit-btn {
+  background: var(--gold);
+  color: #000;
+}
+
+.edit-btn:hover {
+  background: var(--gold-hover);
+  transform: translateY(-1px);
+}
+
+.delete-btn {
+  background: #ff4d4d;
+  color: #fff;
+}
+
+.delete-btn:hover {
+  background: #e63c3c;
+  transform: translateY(-1px);
+}
+
+/* ===============================
+   Empty / Loading
+================================ */
+.review-empty,
+.review-loading {
+  color: var(--text-muted);
+  margin-top: 10px;
+  font-size: 14px;
+}

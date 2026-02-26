@@ -1,29 +1,69 @@
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
+const Product = require("../models/Product");
 
 // ================= CREATE ORDER =================
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { shippingAddress, paymentMethod } = req.body;
+    const { shippingAddress, paymentMethod, items } = req.body;
 
     if (!shippingAddress) {
       return res.status(400).json({ message: "Shipping address is required" });
     }
 
-    // Get user cart
-    const cart = await Cart.findOne({ user: userId }).populate("items.product");
+    let orderItems = [];
+    let calculatedSubtotal = 0;
 
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: "Cart is empty" });
+    // ================= BUY NOW SUPPORT =================
+    if (items && items.length > 0) {
+      // Buy Now flow
+      for (let item of items) {
+        const product = await Product.findById(item.productId);
+
+        if (!product) {
+          return res.status(404).json({ message: "Product not found" });
+        }
+
+        calculatedSubtotal += product.price * item.qty;
+
+        orderItems.push({
+          product: product._id,
+          productId: product._id.toString(),
+          name: product.name,
+          price: product.price,
+          qty: item.qty,
+        });
+      }
+    } else {
+      // ================= CART FLOW =================
+      const cart = await Cart.findOne({ user: userId }).populate(
+        "items.product",
+      );
+
+      if (!cart || cart.items.length === 0) {
+        return res.status(400).json({ message: "Cart is empty" });
+      }
+
+      calculatedSubtotal = cart.items.reduce(
+        (total, item) => total + item.product.price * item.qty,
+        0,
+      );
+
+      orderItems = cart.items.map((item) => ({
+        product: item.product._id,
+        productId: item.product._id.toString(),
+        name: item.product.name,
+        price: item.product.price,
+        qty: item.qty,
+      }));
+
+      // Clear cart after order
+      cart.items = [];
+      await cart.save();
     }
 
-    // Calculate subtotal from cart (secure)
-    const calculatedSubtotal = cart.items.reduce(
-      (total, item) => total + item.product.price * item.qty,
-      0,
-    );
-
+    // ================= PRICE CALCULATION =================
     const GST_RATE = 0.18;
     const PLATFORM_FEE = 20;
 
@@ -32,34 +72,22 @@ exports.createOrder = async (req, res) => {
 
     const method = (paymentMethod || "cod").toLowerCase();
 
-    // Create order
+    // ================= CREATE ORDER =================
     const order = await Order.create({
       user: userId,
-      items: cart.items.map((item) => ({
-        product: item.product._id,
-        name: item.product.name,
-        price: item.product.price,
-        qty: item.qty,
-      })),
+      items: orderItems,
       shippingAddress,
       paymentMethod: method,
 
-      // Pricing
       subtotal: calculatedSubtotal,
       gst: gstAmount,
       platformFee: PLATFORM_FEE,
       totalAmount: finalTotal,
 
       status: "Pending",
-
-      // Paid only for online payments
       isPaid: method !== "cod",
       paidAt: method !== "cod" ? Date.now() : null,
     });
-
-    // Clear cart after order
-    cart.items = [];
-    await cart.save();
 
     res.status(201).json(order);
   } catch (error) {
@@ -95,7 +123,6 @@ exports.getOrderById = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Allow only owner or admin
     if (
       order.user._id.toString() !== req.user.id &&
       req.user.role !== "admin"
@@ -161,7 +188,6 @@ exports.markOrderDelivered = async (req, res) => {
     order.status = "Delivered";
     order.deliveredAt = Date.now();
 
-    // Important: If COD, mark as paid when delivered
     if (order.paymentMethod === "cod" && !order.isPaid) {
       order.isPaid = true;
       order.paidAt = Date.now();

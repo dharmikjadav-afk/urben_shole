@@ -13,6 +13,11 @@ import {
 } from "react-icons/fi";
 import { addToWishlist as addWishlistAPI } from "../api/api";
 import { toast } from "react-toastify";
+
+// Review Components
+import ReviewForm from "../components/Review/ReviewForm";
+import ReviewList from "../components/Review/ReviewList";
+
 import "./ProductDetail.css";
 
 const SIZES = [6, 7, 8, 9, 10];
@@ -22,7 +27,7 @@ function ProductDetail() {
   const navigate = useNavigate();
 
   const { addToCart } = useContext(CartContext);
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
   const { addToWishlist, removeFromWishlist, isInWishlist } =
     useContext(WishlistContext);
 
@@ -32,6 +37,9 @@ function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [size, setSize] = useState(null);
   const [error, setError] = useState("");
+
+  // Review refresh trigger
+  const [refreshReviews, setRefreshReviews] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -79,7 +87,6 @@ function ProductDetail() {
       for (let i = 0; i < qty; i++) {
         await addToCart(item);
       }
-
       toast.success("Added to cart");
     } catch (error) {
       console.error("Cart Error:", error);
@@ -87,7 +94,7 @@ function ProductDetail() {
     }
   };
 
-  // ================= Buy Now (FIXED – No cart update) =================
+  // ================= Buy Now =================
   const handleBuyNow = () => {
     if (!user) {
       navigate("/login");
@@ -108,7 +115,6 @@ function ProductDetail() {
       size: size,
     };
 
-    // Send directly to checkout (do NOT add to cart)
     navigate("/checkout", {
       state: {
         buyNow: true,
@@ -140,6 +146,11 @@ function ProductDetail() {
       console.error("Wishlist API Error:", error);
       toast.error("Failed to save wishlist");
     }
+  };
+
+  // ================= Review Refresh =================
+  const handleReviewAdded = () => {
+    setRefreshReviews(!refreshReviews);
   };
 
   return (
@@ -214,6 +225,18 @@ function ProductDetail() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ================= REVIEWS SECTION ================= */}
+      <div className="review-section">
+        <ReviewForm
+          productId={productId}
+          user={user}
+          token={token}
+          onReviewAdded={handleReviewAdded}
+        />
+
+        <ReviewList productId={productId} refreshTrigger={refreshReviews} />
       </div>
     </section>
   );

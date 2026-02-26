@@ -4,20 +4,23 @@ export const AuthContext = createContext();
 
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null); // NEW
   const [loading, setLoading] = useState(true);
 
+  // ===============================
   // Load user on app start
+  // ===============================
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem("user");
-      const token = localStorage.getItem("token");
+      const storedToken = localStorage.getItem("token");
 
-      // Only set user if both exist
-      if (storedUser && token) {
+      if (storedUser && storedToken) {
         setUser(JSON.parse(storedUser));
+        setToken(storedToken);
       }
     } catch (error) {
-      // If JSON is corrupted, clear storage
+      // If JSON corrupted, clear storage
       localStorage.removeItem("user");
       localStorage.removeItem("token");
     }
@@ -25,7 +28,9 @@ function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  // Login (used after Login or OTP verification)
+  // ===============================
+  // Login
+  // ===============================
   const login = (userData, tokenData) => {
     if (userData) {
       localStorage.setItem("user", JSON.stringify(userData));
@@ -34,20 +39,26 @@ function AuthProvider({ children }) {
 
     if (tokenData) {
       localStorage.setItem("token", tokenData);
+      setToken(tokenData);
     }
 
     localStorage.setItem("isLoggedIn", "true");
   };
 
+  // ===============================
+  // Logout
+  // ===============================
   const logout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     localStorage.removeItem("isLoggedIn");
+
     setUser(null);
+    setToken(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );

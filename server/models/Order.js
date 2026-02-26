@@ -2,16 +2,24 @@ const mongoose = require("mongoose");
 
 const orderItemSchema = new mongoose.Schema(
   {
+    // MongoDB reference (existing - keep)
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
+    },
+
+    // NEW: String productId (for frontend/static products & review system)
+    productId: {
+      type: String,
       required: true,
     },
+
     qty: {
       type: Number,
       required: true,
       min: 1,
     },
+
     price: {
       type: Number,
       required: true,
@@ -30,7 +38,7 @@ const orderSchema = new mongoose.Schema(
 
     items: [orderItemSchema],
 
-    // ✅ Fixed: Now accepts object from Checkout
+    // Shipping Address
     shippingAddress: {
       name: { type: String, required: true },
       phone: { type: String, required: true },
@@ -62,7 +70,6 @@ const orderSchema = new mongoose.Schema(
     },
 
     paidAt: Date,
-
     deliveredAt: Date,
   },
   {
