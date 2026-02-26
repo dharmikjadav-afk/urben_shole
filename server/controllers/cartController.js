@@ -36,14 +36,14 @@ exports.getCart = async (req, res) => {
   }
 };
 
-// ================= ADD TO CART (FINAL FIX) =================
+// ================= ADD TO CART =================
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.user.id;
     const { productId, size = 8 } = req.body;
 
-    if (!productId) {
-      return res.status(400).json({ message: "Product ID required" });
+    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "Valid Product ID required" });
     }
 
     const productObjectId = new mongoose.Types.ObjectId(productId);
@@ -54,7 +54,7 @@ exports.addToCart = async (req, res) => {
       cart = await Cart.create({ user: userId, items: [] });
     }
 
-    // 🔥 Match by product + size
+    // Match by product + size
     const index = cart.items.findIndex(
       (item) =>
         item.product.toString() === productObjectId.toString() &&
@@ -86,6 +86,10 @@ exports.decreaseQty = async (req, res) => {
   try {
     const userId = req.user.id;
     const { productId, size = 8 } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.json({ items: [] });
+    }
 
     const productObjectId = new mongoose.Types.ObjectId(productId);
 
@@ -122,6 +126,10 @@ exports.removeFromCart = async (req, res) => {
     const userId = req.user.id;
     const { productId, size = 8 } = req.body;
 
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.json({ items: [] });
+    }
+
     const productObjectId = new mongoose.Types.ObjectId(productId);
 
     const cart = await Cart.findOne({ user: userId });
@@ -148,8 +156,12 @@ exports.removeFromCart = async (req, res) => {
 // ================= CLEAR CART =================
 exports.clearCart = async (req, res) => {
   try {
-    await Cart.updateOne({ user: req.user.id }, { $set: { items: [] } });
-    res.json({ message: "Cart cleared" });
+    const userId = req.user.id;
+
+    await Cart.updateOne({ user: userId }, { $set: { items: [] } });
+
+    // Return empty cart for frontend safety
+    res.json({ items: [] });
   } catch (error) {
     console.error("Clear Cart Error:", error);
     res.status(500).json({ message: "Server error" });

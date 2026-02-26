@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { FiCheckCircle, FiTruck, FiHome } from "react-icons/fi";
 import "./OrderConfirmation.css";
 
@@ -6,22 +7,29 @@ function OrderConfirmation() {
   const { state } = useLocation();
   const navigate = useNavigate();
 
-  if (!state) {
-    navigate("/");
-    return null;
-  }
+  // Redirect if no order data
+  useEffect(() => {
+    if (!state) {
+      navigate("/");
+    }
+  }, [state, navigate]);
 
-  const {
-    id,
-    items,
-    total,
-    address,
-    paymentMethod,
-    subtotal,
-    gst,
-    platformFee,
-    date,
-  } = state;
+  if (!state) return null;
+
+  // Support both old and backend format
+  const id = state.id || state._id;
+  const items = state.items || [];
+  const total = state.total || 0;
+  const address = state.address || state.shippingAddress || {};
+  const paymentMethod = state.paymentMethod || "cod";
+  const subtotal = state.subtotal || 0;
+  const gst = state.gst || 0;
+  const platformFee = state.platformFee || 0;
+  const date =
+    state.date ||
+    (state.createdAt
+      ? new Date(state.createdAt).toLocaleString()
+      : new Date().toLocaleString());
 
   return (
     <section className="order-confirm-page">
@@ -67,8 +75,8 @@ function OrderConfirmation() {
         <div className="order-section">
           <h3>Items Ordered</h3>
 
-          {items.map((item) => (
-            <div className="order-item" key={item.id}>
+          {items.map((item, index) => (
+            <div className="order-item" key={item._id || item.id || index}>
               <span>
                 {item.name} × {item.qty}
               </span>

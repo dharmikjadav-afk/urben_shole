@@ -18,34 +18,50 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // Calculate total
-    const totalAmount = cart.items.reduce(
+    // Calculate subtotal from cart (secure)
+    const calculatedSubtotal = cart.items.reduce(
       (total, item) => total + item.product.price * item.qty,
       0,
     );
+
+    const GST_RATE = 0.18;
+    const PLATFORM_FEE = 20;
+
+    const gstAmount = Math.round(calculatedSubtotal * GST_RATE);
+    const finalTotal = calculatedSubtotal + gstAmount + PLATFORM_FEE;
+
+    const method = (paymentMethod || "cod").toLowerCase();
 
     // Create order
     const order = await Order.create({
       user: userId,
       items: cart.items.map((item) => ({
         product: item.product._id,
-        qty: item.qty,
+        name: item.product.name,
         price: item.product.price,
+        qty: item.qty,
       })),
       shippingAddress,
-      paymentMethod: paymentMethod || "COD",
-      totalAmount,
+      paymentMethod: method,
+
+      // Pricing
+      subtotal: calculatedSubtotal,
+      gst: gstAmount,
+      platformFee: PLATFORM_FEE,
+      totalAmount: finalTotal,
+
       status: "Pending",
+
+      // Paid only for online payments
+      isPaid: method !== "cod",
+      paidAt: method !== "cod" ? Date.now() : null,
     });
 
     // Clear cart after order
     cart.items = [];
     await cart.save();
 
-    res.status(201).json({
-      message: "Order placed successfully",
-      order,
-    });
+    res.status(201).json(order);
   } catch (error) {
     console.error("Create Order Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -144,6 +160,12 @@ exports.markOrderDelivered = async (req, res) => {
 
     order.status = "Delivered";
     order.deliveredAt = Date.now();
+
+    // Important: If COD, mark as paid when delivered
+    if (order.paymentMethod === "cod" && !order.isPaid) {
+      order.isPaid = true;
+      order.paidAt = Date.now();
+    }
 
     await order.save();
 

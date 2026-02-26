@@ -23,7 +23,10 @@ function CartProvider({ children }) {
   const fetchCart = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) {
+        setCart([]);
+        return;
+      }
 
       const res = await axios.get(API_URL, {
         headers: {
@@ -34,6 +37,7 @@ function CartProvider({ children }) {
       setCart(res.data.items || []);
     } catch (error) {
       console.log("Fetch cart error:", error);
+      setCart([]);
     }
   };
 
@@ -46,7 +50,7 @@ function CartProvider({ children }) {
     }
   }, [user]);
 
-  // Backup cart locally
+  // Backup cart locally (optional safety)
   useEffect(() => {
     if (user?.email) {
       localStorage.setItem(`cart_${user.email}`, JSON.stringify(cart));
@@ -56,12 +60,13 @@ function CartProvider({ children }) {
   // ================= Add to Cart =================
   const addToCart = async (product) => {
     if (!user || !product) return;
-
     if (loadingRef.current) return;
+
     loadingRef.current = true;
 
     try {
       const token = localStorage.getItem("token");
+      if (!token) return;
 
       const productId = getProductId(product);
       const size = Number(product.size) || 8;
@@ -90,7 +95,6 @@ function CartProvider({ children }) {
   };
 
   // ================= Increase Qty =================
-  // (Same as addToCart)
   const increaseQty = (product) => {
     addToCart(product);
   };
@@ -98,12 +102,13 @@ function CartProvider({ children }) {
   // ================= Decrease Qty =================
   const decreaseQty = async (productId, size = 8) => {
     if (!user) return;
-
     if (loadingRef.current) return;
+
     loadingRef.current = true;
 
     try {
       const token = localStorage.getItem("token");
+      if (!token) return;
 
       const res = await axios.post(
         `${API_URL}/decrease`,
@@ -129,12 +134,13 @@ function CartProvider({ children }) {
   // ================= Remove Item =================
   const removeFromCart = async (productId, size = 8) => {
     if (!user) return;
-
     if (loadingRef.current) return;
+
     loadingRef.current = true;
 
     try {
       const token = localStorage.getItem("token");
+      if (!token) return;
 
       const res = await axios.post(
         `${API_URL}/remove`,
@@ -159,10 +165,14 @@ function CartProvider({ children }) {
 
   // ================= Clear Cart =================
   const clearCart = async () => {
-    if (!user) return;
-
     try {
       const token = localStorage.getItem("token");
+
+      // If no token, just clear locally
+      if (!token) {
+        setCart([]);
+        return;
+      }
 
       await axios.delete(`${API_URL}/clear`, {
         headers: {
@@ -171,9 +181,13 @@ function CartProvider({ children }) {
       });
 
       setCart([]);
-      localStorage.removeItem(`cart_${user.email}`);
+
+      if (user?.email) {
+        localStorage.removeItem(`cart_${user.email}`);
+      }
     } catch (error) {
       console.log("Clear cart error:", error);
+      setCart([]);
     }
   };
 

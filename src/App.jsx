@@ -12,7 +12,7 @@ import Kids from "./pages/Kids";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword"; // ✅ Added
+import ResetPassword from "./pages/ResetPassword";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import Contact from "./pages/Contact";
@@ -31,6 +31,7 @@ import TermsConditions from "./pages/TermsConditions";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyOtp from "./pages/VerifyOtp";
 import VerifyPending from "./pages/VerifyPending";
+import AdminOrders from "./pages/AdminOrders";
 
 /* Components */
 import Navbar from "./components/Navbar";
@@ -61,16 +62,16 @@ function Layout() {
         <Route path="/faq" element={<Faq />} />
         <Route path="/shipping-returns" element={<ShippingReturns />} />
         <Route path="/help" element={<HelpCenter />} />
+
         {/* Auth */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-pending" element={<VerifyPending />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />{" "}
-        {/* ✅ Added */}
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
-        {/* ✅ Added */}
+
         {/* Protected Routes */}
         <Route
           path="/wishlist"
@@ -104,6 +105,15 @@ function Layout() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/admin/orders"
+          element={
+            <ProtectedRoute>
+              <AdminOrders />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/track-order"
           element={
@@ -120,14 +130,19 @@ function Layout() {
             </ProtectedRoute>
           }
         />
+
+        {/* Updated: Order Details with ID */}
         <Route
-          path="/order-details"
+          path="/order-details/:id"
           element={
             <ProtectedRoute>
               <OrderDetails />
             </ProtectedRoute>
           }
         />
+
+        {/* Optional: 404 fallback */}
+        <Route path="*" element={<Home />} />
       </Routes>
 
       <Footer />

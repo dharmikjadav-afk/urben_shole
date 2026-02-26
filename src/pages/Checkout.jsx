@@ -1,5 +1,6 @@
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { CartContext } from "../context/CartContext";
 import "./Checkout.css";
 
@@ -24,6 +25,7 @@ function Checkout() {
 
   const [payment, setPayment] = useState("cod");
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setAddress({ ...address, [e.target.name]: e.target.value });
@@ -50,27 +52,52 @@ function Checkout() {
     return Object.keys(e).length === 0;
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
+    if (cart.length === 0) {
+      alert("Your cart is empty");
+      return;
+    }
+
     if (!validate()) return;
 
-    const order = {
-      id: "ORD" + Date.now(),
-      items: cart,
-      address,
-      paymentMethod: payment,
-      subtotal: cartTotal,
-      gst: gstAmount,
-      platformFee: PLATFORM_FEE,
-      total: finalTotal,
-      status: "Order Placed",
-      date: new Date().toLocaleString(),
-    };
+    setLoading(true);
 
-    const orders = JSON.parse(localStorage.getItem("orders")) || [];
-    localStorage.setItem("orders", JSON.stringify([...orders, order]));
+    try {
+      const token = localStorage.getItem("token");
 
-    clearCart();
-    navigate("/order-confirmation", { state: order });
+      const orderData = {
+        items: cart,
+        shippingAddress: address,
+        paymentMethod: payment,
+        subtotal: cartTotal,
+        gst: gstAmount,
+        platformFee: PLATFORM_FEE,
+        total: finalTotal,
+        status: "Order Placed",
+        date: new Date().toLocaleString(),
+      };
+
+      const response = await axios.post(
+        "http://localhost:5000/api/orders",
+        orderData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      // Clear cart after successful order
+      clearCart();
+
+      // Navigate to confirmation page with order data
+      navigate("/order-confirmation", { state: response.data });
+    } catch (error) {
+      console.error(error);
+      alert("Order failed. Please login and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -211,10 +238,10 @@ function Checkout() {
 
           <button
             className="place-order-btn"
-            disabled={cart.length === 0}
+            disabled={cart.length === 0 || loading}
             onClick={handlePlaceOrder}
           >
-            Place Order
+            {loading ? "Placing Order..." : "Place Order"}
           </button>
 
           <p className="secure-note">100% secure & encrypted checkout</p>

@@ -21,18 +21,21 @@ router.post("/", protect, createOrder);
 // Get logged-in user's orders
 router.get("/my", protect, getUserOrders);
 
-// Get single order by ID
-router.get("/:id", protect, getOrderById);
-
 // ================= ADMIN ROUTES =================
 
-// Get all orders
-router.get("/", protect, adminOnly, getAllOrders);
+// Get all orders (admin)
+router.get("/all", protect, adminOnly, getAllOrders);
 
 // Mark as paid
 router.put("/:id/pay", protect, adminOnly, markOrderPaid);
 
 // Mark as delivered
 router.put("/:id/deliver", protect, adminOnly, markOrderDelivered);
+
+// ================= COMMON =================
+
+// Get single order by ID
+// (Placed at bottom to avoid conflict with /my or /all)
+router.get("/:id", protect, getOrderById);
 
 module.exports = router;

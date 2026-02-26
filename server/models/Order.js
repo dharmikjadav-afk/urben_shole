@@ -30,9 +30,14 @@ const orderSchema = new mongoose.Schema(
 
     items: [orderItemSchema],
 
+    // ✅ Fixed: Now accepts object from Checkout
     shippingAddress: {
-      type: String,
-      required: true,
+      name: { type: String, required: true },
+      phone: { type: String, required: true },
+      address: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      pincode: { type: String, required: true },
     },
 
     paymentMethod: {

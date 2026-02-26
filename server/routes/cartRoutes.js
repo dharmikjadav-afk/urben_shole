@@ -26,6 +26,8 @@ router.post("/decrease", authMiddleware, decreaseQty);
 router.post("/remove", authMiddleware, removeFromCart);
 
 // Clear entire cart
+// Support both POST and DELETE (safe for all cases)
 router.post("/clear", authMiddleware, clearCart);
+router.delete("/clear", authMiddleware, clearCart);
 
 module.exports = router;
