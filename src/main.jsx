@@ -5,6 +5,7 @@ import ThemeProvider from "./context/ThemeContext";
 import AuthProvider from "./context/AuthContext";
 import WishlistProvider from "./context/WishlistContext";
 import CartProvider from "./context/CartContext";
+import { OrderProvider } from "./context/OrderContext"; // ⭐ NEW
 import "./index.css";
 import "aos/dist/aos.css";
 
@@ -21,24 +22,27 @@ root.render(
       <AuthProvider>
         <WishlistProvider>
           <CartProvider>
-            <App />
-
-            {/* Global Toast Container */}
-            <ToastContainer
-              position="top-right"
-              autoClose={2500}
-              hideProgressBar={false}
-              newestOnTop
-              closeOnClick
-              pauseOnHover
-              draggable
-              theme="dark"
-              toastStyle={{
-                background: "#0f172a",
-                color: "#ffffff",
-                borderRadius: "10px",
-              }}
-            />
+            <OrderProvider>
+              {" "}
+              {/* ⭐ NEW PROVIDER */}
+              <App />
+              {/* Global Toast Container */}
+              <ToastContainer
+                position="top-right"
+                autoClose={2500}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                pauseOnHover
+                draggable
+                theme="dark"
+                toastStyle={{
+                  background: "#0f172a",
+                  color: "#ffffff",
+                  borderRadius: "10px",
+                }}
+              />
+            </OrderProvider>
           </CartProvider>
         </WishlistProvider>
       </AuthProvider>

@@ -5,14 +5,13 @@ import { CartContext } from "../context/CartContext";
 import "./Checkout.css";
 
 function Checkout() {
-  const { cart, clearCart, addToCart } = useContext(CartContext);
+  const { cart, clearCart } = useContext(CartContext);
   const navigate = useNavigate();
   const location = useLocation();
 
   // ================= BUY NOW SUPPORT =================
   const buyNowItems = location.state?.items || [];
   const isBuyNow = location.state?.buyNow || false;
-
   const items = isBuyNow ? buyNowItems : cart;
   // ===================================================
 
@@ -74,18 +73,16 @@ function Checkout() {
     try {
       const token = localStorage.getItem("token");
 
-      // ================= IMPORTANT FIX =================
-      // If Buy Now, first add items to cart (so backend finds them)
-      if (isBuyNow) {
-        items.forEach((item) => {
-          addToCart(item);
-        });
-      }
-      // =================================================
+      // ⭐ Backend expects: items [{ productId, qty }]
+      const itemsForBackend = items.map((item) => ({
+        productId: item._id,
+        qty: item.qty,
+      }));
 
       const orderData = {
         shippingAddress: address,
         paymentMethod: payment,
+        items: itemsForBackend,
       };
 
       const response = await axios.post(
@@ -99,11 +96,10 @@ function Checkout() {
       );
 
       clearCart();
-
       navigate("/order-confirmation", { state: response.data });
     } catch (error) {
       console.error(error);
-      alert("Order failed. Please login and try again.");
+      alert(error.response?.data?.message || "Order failed");
     } finally {
       setLoading(false);
     }

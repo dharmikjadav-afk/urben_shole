@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../../api/api"; // ⭐ use project axios
 import { useNavigate } from "react-router-dom";
 import "./Review.css";
 
@@ -18,23 +18,22 @@ function ReviewForm({ productId, user, token, onReviewAdded }) {
   useEffect(() => {
     const checkVerification = async () => {
       if (!user || !token) {
+        setVerified(false);
         setLoading(false);
         return;
       }
 
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/reviews/verify/${productId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        const res = await axios.get(`/api/reviews/verify/${productId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+        });
 
         setVerified(res.data.verified);
       } catch (error) {
         console.error("Verification error:", error);
+        setVerified(false);
       } finally {
         setLoading(false);
       }
@@ -52,7 +51,7 @@ function ReviewForm({ productId, user, token, onReviewAdded }) {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/reviews",
+        "/api/reviews",
         {
           productId,
           rating,
@@ -69,7 +68,6 @@ function ReviewForm({ productId, user, token, onReviewAdded }) {
       setRating(5);
       setMessage("Review submitted successfully");
 
-      // Refresh review list
       if (onReviewAdded) {
         onReviewAdded();
       }
@@ -93,7 +91,7 @@ function ReviewForm({ productId, user, token, onReviewAdded }) {
   }
 
   if (loading) {
-    return <p>Checking verification...</p>;
+    return <p className="review-loading">Checking verification...</p>;
   }
 
   // Not verified buyer
@@ -119,18 +117,12 @@ function ReviewForm({ productId, user, token, onReviewAdded }) {
 
       <form onSubmit={handleSubmit}>
         {/* Star Rating */}
-        <div style={{ marginBottom: "10px" }}>
-          <label>Rating: </label>
+        <div className="star-rating">
           {[1, 2, 3, 4, 5].map((star) => (
             <span
               key={star}
+              className={`star ${star <= rating ? "active" : ""}`}
               onClick={() => setRating(star)}
-              style={{
-                cursor: "pointer",
-                fontSize: "20px",
-                color: star <= rating ? "gold" : "gray",
-                marginRight: "5px",
-              }}
             >
               ★
             </span>
@@ -138,16 +130,12 @@ function ReviewForm({ productId, user, token, onReviewAdded }) {
         </div>
 
         {/* Comment */}
-        <div>
-          <textarea
-            placeholder="Write your review..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            required
-            rows="4"
-            style={{ width: "100%", marginBottom: "10px" }}
-          />
-        </div>
+        <textarea
+          placeholder="Write your review..."
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          required
+        />
 
         <button type="submit">Submit Review</button>
       </form>

@@ -38,9 +38,12 @@ function ProductDetail() {
   const [size, setSize] = useState(null);
   const [error, setError] = useState("");
 
-  // Review refresh trigger
   const [refreshReviews, setRefreshReviews] = useState(false);
 
+  const [isVerifiedBuyer, setIsVerifiedBuyer] = useState(false);
+  const [checkingPurchase, setCheckingPurchase] = useState(true);
+
+  // ================= Fetch Product =================
   useEffect(() => {
     window.scrollTo(0, 0);
 
@@ -58,12 +61,50 @@ function ProductDetail() {
     fetchProduct();
   }, [id]);
 
-  if (loading) {
-    return <h2 style={{ padding: "120px" }}>Loading product...</h2>;
-  }
+  // ================= Check Purchase (FINAL FIX) =================
+  useEffect(() => {
+    const checkPurchase = async () => {
+      if (!user || !token || !product) {
+        setCheckingPurchase(false);
+        return;
+      }
 
-  if (!product) {
-    return <h2 style={{ padding: "120px" }}>Product not found</h2>;
+      try {
+        const res = await axios.get("/api/orders/my", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const orders = res.data;
+
+        const purchased = orders.some((order) =>
+          order.items.some((item) => {
+            const orderProductId =
+              item.productId || item.product?._id || item.product;
+
+            return String(orderProductId) === String(product._id);
+          }),
+        );
+
+        setIsVerifiedBuyer(purchased);
+      } catch (error) {
+        console.error("Purchase check error:", error);
+      } finally {
+        setCheckingPurchase(false);
+      }
+    };
+
+    checkPurchase();
+  }, [user, token, product]);
+
+  // ================= Safe Loading =================
+  if (loading || !product) {
+    return (
+      <h2 style={{ padding: "120px" }}>
+        {loading ? "Loading product..." : "Product not found"}
+      </h2>
+    );
   }
 
   const productId = product._id;
@@ -148,7 +189,6 @@ function ProductDetail() {
     }
   };
 
-  // ================= Review Refresh =================
   const handleReviewAdded = () => {
     setRefreshReviews(!refreshReviews);
   };
@@ -166,7 +206,7 @@ function ProductDetail() {
 
         <div className="product-info">
           <h1>{product.name}</h1>
-          <span className="category">{product.category.toUpperCase()}</span>
+          <span className="category">{product.category?.toUpperCase()}</span>
           <p className="price">₹{product.price}</p>
 
           <p className="description">
@@ -227,14 +267,29 @@ function ProductDetail() {
         </div>
       </div>
 
-      {/* ================= REVIEWS SECTION ================= */}
+      {/* ================= REVIEWS ================= */}
       <div className="review-section">
-        <ReviewForm
-          productId={productId}
-          user={user}
-          token={token}
-          onReviewAdded={handleReviewAdded}
-        />
+        {checkingPurchase ? (
+          <p>Checking purchase status...</p>
+        ) : user && isVerifiedBuyer ? (
+          <ReviewForm
+            productId={productId}
+            user={user}
+            token={token}
+            onReviewAdded={handleReviewAdded}
+          />
+        ) : user ? (
+          <div className="not-verified-box">
+            <p style={{ color: "red" }}>
+              You are not a verified buyer. Please purchase this product first.
+            </p>
+            <button onClick={() => navigate("/orders")}>
+              View Your Orders
+            </button>
+          </div>
+        ) : (
+          <p>Please login to write a review.</p>
+        )}
 
         <ReviewList productId={productId} refreshTrigger={refreshReviews} />
       </div>
